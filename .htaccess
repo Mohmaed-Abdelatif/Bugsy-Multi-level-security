@@ -1,0 +1,43 @@
+#Root .htaccess (hyper text access) used by the Apache web server, like a firewall layer before php
+
+#---------------------------------------------
+#redirect all traffic to public/ foldre
+#Keeps your app/ and config/ code hidden from the public
+#---------------------------------------------
+
+# if rewrite module exists
+<IfModule mod_rewrite.c>
+    #on to rewite rules work
+    RewriteEngine on
+
+    #reditect to public foldre, [L] mean last rule and stop processing the rest
+
+    #if url pathe is empty: http://localhost/Bugsy/  to http://localhost/Bugsy/public/
+    RewriteRule ^$ public/ [L]
+
+    #this handels all other urls like : v1/users/login to public/v1/users/login
+    RewriteRule (.*) public/$1 [L]
+</Ifmodule>
+
+
+
+#---------------------------------------------
+#deny access to sensitive files
+#---------------------------------------------
+
+#deny access to .env files
+<Files .env>
+    Order allow,deny
+    Deny from all
+</Files>
+
+
+#deny access to any .md files (markdown files)
+<FilesMatch "\.(md)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+
+
+

@@ -1,0 +1,97 @@
+# public/.htaccess (hyper text access) used by the Apache web server, like a firewall layer before php
+#in root .htaccess ,make the public folder is the entry point to hidde sesitive folders and files to be accessed
+#but urls(endpoints) that will user frontend will use will be ugly exm: index.php?url=api/v1/products
+#so will solve it with make our pattern of endpoints url, doesn't exist in reel structure but will handel it her to go to index.php the app.php to be handeld
+#------------------------------------
+#clean URLs
+#------------------------------------
+
+#if rewrite module exists
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # If the requested file exists, serve it directly
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    
+    # Otherwise, route through index.php
+    #^(.*)$ => it matches any URL:    /users/1, /api/v1/cart, etc.
+    #index.php?url=$1  =>It redirects everything to index.php and passes the original path as a query parameter called url.
+    #so, " /api/v1/products/5 "  becomes: " index.php?url=api/v1/products/5 "
+    #QSA (Query String Append): keeps existing query parameters /products?category=phones => index.php?url=products&category=phones
+    #L (Last): means “stop processing other rewrite rules after this one”
+    #thin PHP router (inside App.php) will then read $_GET['url'] and decide which controller and method to call.
+    RewriteRule ^(.*)$ index.php?url=$1 [QSA,L]
+</IfModule>
+#summary: If the user requests a file or folder that doesn’t exist(or style of our endpoints that will use in front),send the request to index.php and let PHP handle it.
+
+
+
+#------------------------------------
+#CORS headers handelar extra for make sure front can call API
+#------------------------------------
+
+<IfModule mod_headers.c>
+    # Allow any origin (change * to specific domain in production)
+    Header always set Access-Control-Allow-Origin "*"
+    # Allow these HTTP methods
+    Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+    # Allow these headers
+    Header always set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With"
+    # Cache preflight requests for 1 hour
+    Header always set Access-Control-Max-Age "3600"
+</IfModule>
+
+
+#------------------------------------
+#security headers: modify HTTP headers in the response before it reaches the browser.
+#------------------------------------
+
+<IfModule mod_headers.c>
+    # Prevent clickjacking : only this site with this domin can display this site in iframe
+    Header always set X-Frame-Options "SAMEORIGIN"
+    
+    # Prevent MIME type sniffing : don't guess If you serve a .js file, it will only be treated as JS, not HTML or something else.
+    Header always set X-Content-Type-Options "nosniff"
+    
+    # Enable XSS protection : “If the browser detects a possible XSS attack, block the page entirely instead of trying to sanitize it.”
+    Header always set X-XSS-Protection "1; mode=block"
+</IfModule>
+
+#These are BROWSER/SERVER level protections, NOT application code security! so not break project idea
+#WHAT HEADERS CAN'T PROTECT:
+# SQL Injection (code issue)
+# Authentication bypass (code issue)
+# Password exposure in API (code issue)
+# Accessing other users' data (code issue)
+# Cart manipulation (code issue)
+# Price manipulation (code issue)
+# Session hijacking (code issue)
+# Brute force attacks (code issue)
+#Level 1: Vulnerable code (SQL injection, etc.) 
+#Level 2: Secure code (prepared statements, etc.) 
+#Level 3: Advanced code (AI, 2FA, etc.) 
+
+
+#-------------------------------------
+#cache control (for images/statc files)
+#-------------------------------------
+
+<IfModule mod_expires.c>
+    ExpiresActive On
+    
+    # Images cache for 1 month
+    ExpiresByType image/jpeg "access plus 1 month"
+    ExpiresByType image/png "access plus 1 month"
+    ExpiresByType image/gif "access plus 1 month"
+    
+    # CSS/JS cache for 1 week
+    ExpiresByType text/css "access plus 1 week"
+    ExpiresByType application/javascript "access plus 1 week"
+</IfModule>
+
+# his section tells the browser how long it should keep certain types of files (like images, CSS, JS) in its local cache before re-downloading them from the server again.
+# That means:
+# Your website loads faster.
+# You save bandwidth.
+# The server handles fewer requests.
