@@ -5,21 +5,35 @@ require_once '../config/config.php';
 
 // phpinfo();
 // echo APP_NAME;
-
 // echo APP_NAME;
 // echo APP_ENV;
 // echo APP_URL;
-
 // echo DB_NAME;
 // echo empty(DB_PASS) ? '(empty)' : '******* (hidden)'; 
 // echo ROOT;
-echo $_SERVER['REQUEST_URI'] .'   =>url i used <br>'; //just show the url you used ,not the path taken
-echo $_SERVER['PHP_SELF'].'       => file running<br>';
-echo $_GET['url'] . '       => url after index.php?   , shows only when rewrite url accure in public/.htaccess when use url like this /api/v1/products/5<br>  ,,,,, the goal is how to hander this url to use right controller , routes will help in that'              
+// echo $_SERVER['REQUEST_URI'] .'   =>url i used <br>'; //just show the url you used ,not the path taken
+// echo $_SERVER['PHP_SELF'].'       => file running<br>';
+// echo $_GET['url'] . '       => url after index.php?'   ;//shows only when rewrite url accure in public/.htaccess when use url like this /api/v1/products/5<br>  ,,,,, the goal is how to hander this url to use right controller , routes will help in that'              
+
+//-------------------
+
+Helpers\Response::success([
+    'user' => [
+        'id' =>1,
+        'name'=>'mohamed',
+        'email'=>'imoalsaeed@gmail.com'
+    ]
+],'use retrieved successfuly');
+
+// Helpers\Response::error('error',400);
+
+// Helpers\Response::notFound();
+
+// Helpers\Response::json(['custom'=>'data','test'=>true],200)
 
 ?>
 <!-- to html work should i first command the cors headers from config,otherwise it return json -->
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -77,4 +91,4 @@ echo $_GET['url'] . '       => url after index.php?   , shows only when rewrite 
         <strong>Next step:</strong> Test database connection!
     </div>
 </body>
-</html>
+</html> -->
