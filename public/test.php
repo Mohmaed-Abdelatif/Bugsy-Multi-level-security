@@ -42,22 +42,9 @@ try {
     
     echo "✅ <strong>Database connection successful!</strong><br><br>";
     
-    // Test query: Count users
-    echo "<h2>Test Query 1: Count Users</h2>";
-    $result = $db->query("SELECT COUNT(*) as total FROM users");
-    
-    if ($result) {
-        $row = $result->fetch_assoc();
-        echo "✅ Query executed successfully!<br>";
-        echo "Total users in database: <strong>" . $row['total'] . "</strong><br><br>";
-    } else {
-        echo "❌ Query failed!<br><br>";
-    }
-    
-    // Test query: Get all brands
-    echo "<h2>Test Query 2: Get All Brands</h2>";
+    // Test query: Get all brands with MySQLi
+    echo "<h2>Test Query 1: Get All Brands with MySQLi</h2>";
     $result = $db->query("SELECT * FROM brands LIMIT 5");
-    
     if ($result) {
         echo "✅ Query executed successfully!<br>";
         echo "Brands found: <strong>" . $result->num_rows . "</strong><br>";
@@ -69,47 +56,40 @@ try {
     } else {
         echo "❌ Query failed!<br><br>";
     }
-    
-    // Test query: Get all categories
-    echo "<h2>Test Query 3: Get All Categories</h2>";
-    $result = $db->query("SELECT * FROM categories");
-    
+
+
+    // Test query: Get all brands with PDO
+    echo "<h2>Test Query 2: Get All Brands with PDO</h2>";
+    $result = $db->prepare("SELECT * FROM brands LIMIT 5");
+    $result->execute();
     if ($result) {
         echo "✅ Query executed successfully!<br>";
-        echo "Categories found: <strong>" . $result->num_rows . "</strong><br>";
+        echo "Brands found: <strong>" . $result->rowCount() . "</strong><br>";
         echo "<ul>";
-        while ($category = $result->fetch_assoc()) {
-            echo "<li>ID: {$category['id']} - {$category['name']}</li>";
+        while ($brand = $result->fetch()) {
+            echo "<li>ID: {$brand['id']} - {$brand['name']}</li>";
         }
         echo "</ul><br>";
     } else {
         echo "❌ Query failed!<br><br>";
     }
     
-    // Test query: Get products count
-    echo "<h2>Test Query 4: Count Products</h2>";
-    $result = $db->query("SELECT COUNT(*) as total FROM products");
-    
+    // Test query: Get one brand with PDO
+    echo "<h2>Test Query 3: Get one Brand with PDO</h2>";
+    $result = $db->prepare("SELECT * FROM brands WHERE id = :id");
+    $result->execute(['id'=>4]);
     if ($result) {
-        $row = $result->fetch_assoc();
         echo "✅ Query executed successfully!<br>";
-        echo "Total products in database: <strong>" . $row['total'] . "</strong><br><br>";
+        echo "Brands found: <strong>" . $result->rowCount() . "</strong><br>";
+        echo "<ul>";
+        while ($brand = $result->fetch()) {
+            echo "<li>ID: {$brand['id']} - {$brand['name']} => This is my old phone brand</li>";
+        }
+        echo "</ul><br>";
     } else {
         echo "❌ Query failed!<br><br>";
     }
-    
-    // Test lastInsertId() method
-    echo "<h2>Test Query 5: Insert Test (will rollback)</h2>";
-    // We won't actually insert, just demonstrate the method exists
-    echo "✅ lastInsertId() method available<br>";
-    echo "✅ escape() method available<br>";
-    echo "✅ affectedRows() method available<br><br>";
-    
-    echo "<hr>";
-    echo "<h2>✅ All Tests Passed!</h2>";
-    echo "<p>Database connection is working correctly.</p>";
-    echo "<p><strong>Next step:</strong> Build the router (App.php)</p>";
-    
+         
 } catch (\Exception $e) {
     echo "❌ <strong>Error:</strong> " . $e->getMessage();
 }

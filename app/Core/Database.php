@@ -2,9 +2,9 @@
 // Database Connection Class (All Levels)
 //Level 1: mysql with direct queries(vulnerable to sql injection)
 //Level 2: PDO with prepared statements (secure) - ready but not active yet
-// Level 3: PDO with advanced features (AI, logging) - ready but not active yet
+//Level 3: PDO with advanced features (AI, logging) - ready but not active yet
 
-//* Design: Both MySQLi and PDO connection code exist, but only MySQLi is active for now.
+//Both MySQLi and PDO connection code exist
 
 //Uses Singleton pattern to ensure only ONE connection(instance) of this class exists. => use private constractor so - Only one object of Database is ever created.
 
@@ -112,6 +112,7 @@ class Database
 
     //get the raw MySQLi connection  object
     //used by models that need direct access to mysqli object.
+    //mysqli will initializea utomatically
     public function getMySQLi()
     {
         if(!$this->mysqliInitialized){
@@ -166,22 +167,62 @@ class Database
     //---------------------------------------------------
     //PDO connection (level2&3) 
     //---------------------------------------------------
-
+    
+    //initialize PDO connection (for level 2&3)
     private function initializePDO()
     {
+        if($this->pdoInitialized){
+            return; //already connected, don't reconnect
+        }
 
+        try{
+            $dsn = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=" . DB_CHARSET;
+
+            //create PDO connection with secure options
+            $this->pdo = new \PDO($dsn, DB_USER, DB_PASS, [
+                \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,  // Throw exceptions on errors
+                \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,  // Return associative arrays
+                \PDO::ATTR_EMULATE_PREPARES => false,  // Real prepared statements (more secure)
+            ]);
+
+            //mark as initialized
+            $this->pdoInitialized = true;
+
+            //log success in devlopment mode (test)
+            if(APP_ENV === 'development'){
+                error_log('PDO connection initialized successfully to: ' . DB_NAME);
+            }
+
+        }catch(\PDOException $e){
+            $this->handleConnectionError('PDO', $e->getMessage(), $e->getCode());
+        }
     }
 
-
+    //get PDO connection (for level 2&3)
+    //when v2 models call this, PDO will initialize automatically
     public function getPDO()
     {
+        if(!$this->pdoInitialized){
+            $this->initializePDO();
+        }
 
+
+        return $this->pdo;
     }
 
-
-    public function perpare($sql)
+    //prepare PDO statement
+    public function prepare($sql)
     {
+        if(!$this->pdoInitialized){
+            $this->initializePDO();
+        }
 
+        //log query for just test (see what queries are running)
+        if(APP_ENV === 'development'){
+            error_log("PDO Query (Secure): " . $sql);
+        }
+
+        return $this->pdo->prepare($sql);
     }
 
     //---------------------------------------------------
