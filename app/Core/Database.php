@@ -2,117 +2,145 @@
 // Database Connection Class (All Levels)
 //Level 1: mysql with direct queries(vulnerable to sql injection)
 //Level 2: PDO with prepared statements (secure) - ready but not active yet
-//so This class handles the database connection using MySQLi.
-//Uses Singleton pattern to ensure only ONE connection(instance) exists. => use private constractor so - Only one object of Database is ever created.
+// Level 3: PDO with advanced features (AI, logging) - ready but not active yet
+
+//* Design: Both MySQLi and PDO connection code exist, but only MySQLi is active for now.
+
+//Uses Singleton pattern to ensure only ONE connection(instance) of this class exists. => use private constractor so - Only one object of Database is ever created.
 
 /*
-  Usage:
-  $db = Core\Database::getInstance()->getConnection();
-  or
+Usage:
+Level 1 (now):
   $db = Core\Database::getInstance();
-  $result = $db->query("SELECT * FROM users");
+  $result = $db->query("SELECT * FROM users");  // MySQLi direct query 
+Level 2 (later):
+  $db = Core\Database::getInstance();
+  $stmt = $db->prepare("SELECT * FROM users WHERE email = :email");  // PDO prepared
+  $stmt->execute(['email' => $email]);
 */
 
 namespace Core;
-
-use mysqli;
 
 class Database
 {
     //singleton instance => ensures only one database connection exists (using private staic).
     //static:(belongs to the class itself not any specific object tack from the class) acces to it useing class name or self:: if call in its class
-    //privata static => to only be accessed within the class — not from outside or even child classes.
-    private static $instace = null;
+    //private: only accessible within this class
+    //privata static => to only be accessed within the class — not from outside or even child classes or object from the class.
+    private static $instance = null;
 
-    //mysql connection object
-    private $connection;
+    //connection properties
+    private $connection; //will delete
 
+    private $mysqli = null; //mysqli connection (for level 1)
+
+    private $pdo = null; //PDO connection (for level 2&3)
+
+
+    //track which connection are initialized (prevents multiple initialization)
+    private $mysqliInitialized = false;
+    private $pdoInitialized = false;
+
+
+
+    //----------------------------------
+    //Singleton Pattern Methods
+    //----------------------------------
 
     //private constructor (singleton pattern)
-    //prevent direct instantiation with 'new Database' outside the class, so cannot create an object from ouside the class $obj=new DataBase();
-    // instead must use Database::getInstance()
+    //prevent direct instantiation with 'new Database' outside the class, so cannot create an object from ouside the class
+    //so Prevents: $db1 = new Database(); $db2 = new Database(); (multiple connections) ;
+    // instead must use Database::getInstance(); "single connection reused"
     private function __construct()
     {
-        //connect to mysql using new mysqli
-        $this->connection = new \mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
-
-        //check for connection eerrors
-        if($this->connection->connect_error)
-        {
-            error_log("-------------------------------------------");
-            error_log("CRITICAL: Database connection failed!");
-            error_log("Error: " . $this->connection->connect_error);
-            error_log("Error Code: " . $this->connection->connect_errno);
-            error_log("Time: " . date('Y-m-d H:i:s'));
-            error_log("-------------------------------------------");
-
-            if(APP_ENV === 'development'){
-                //show detailed error for debugging
-                die(json_encode([
-                    'success' => false,
-                    'message' =>'DataBase connection faild',
-                    'error' => $this->connection->connect_error,
-                    'error_code' =>$this->connection->connect_errno
-           ],JSON_PRETTY_PRINT));
-            }else{
-                //hide details in production
-                die(json_encode([
-                    'success' =>false,
-                    'message' =>'Service temporarily unavailable, Please try again later'
-                ],JSON_PRETTY_PRINT));
-            }
-        }
-
-        // Set character set to UTF-8
-        $this->connection->set_charset(DB_CHARSET);
-
-        //develpement mode :log successful connection (for testing)
-        if(APP_ENV === 'development'){
-            error_log('DataBase connected successfully to: ' . DB_NAME);
-        }
+        //for now,only intitialize mysqli(level 1)
+        //PDO will be initiallized later
+        $this->initializeMySQLi();
     }
 
 
     //get singleton instance
     //creates connection on first call, returns existing connection on subsequent calls
-    //in singleton ,constractor is private so cant't do new datbse
+    //why static?
+    //in singleton ,constractor is private so cant't do new object
     //so i need mehtod that's accessible without creating an object,so this method must be static
     public static function getInstance()
     {
-        if(self::$instace === null){
-            self::$instace = new self(); // connects only once to this class(Database class), "use new self() not new Database()" to be work in inheritance or reusable base classe  
+        if(self::$instance === null){
+            self::$instance = new self(); // connects only once to this class(Database class), "use new self() not new Database()" to be work in inheritance or reusable base classe  
         }
         
-        return self::$instace; //return Database
-        // return Database::$instace; // not flixable and not useful in inheritance coz it will always return an DataBase class object even called from a child class
+        return self::$instance; //return existing instance
     }
 
 
-    //get the raw myqli connection 
-    //used by models to execute queries
-    public function getConnection()
+    //---------------------------------------------------
+    //mysqli connection (level1) 
+    //---------------------------------------------------
+
+    //intilaize mysqli connection
+    //called automatically from constractror
+    private function initializeMySQLi()
     {
-        return $this->connection; //return \mysqli connection "global mysql that fall above"
+        if($this->mysqliInitialized){
+            return; //already connected, don't reconnect
+        }
+
+        //connect to MySQL using MySQLi
+        $this->mysqli = new \mysqli(DB_HOST, DB_USER, DB_PASS,DB_NAME);
+
+        if($this->mysqli->connect_error){
+            $this->handleConnectionError(
+                'MySQLi',
+                $this->mysqli->connect_error,
+                $this->mysqli->connect_errno,
+            );
+        }
+
+        //set character set to UTF-8
+        $this->mysqli->set_charset(DB_CHARSET);
+
+        //Mark as initialized
+        $this->mysqliInitialized = true;
+
+        //log success in devlopment mode (test)
+        if(APP_ENV === 'development'){
+            error_log('MySQLi connection initialized successfully to: ' . DB_NAME);
+        }
+
+    }
+
+    //get the raw MySQLi connection  object
+    //used by models that need direct access to mysqli object.
+    public function getMySQLi()
+    {
+        if(!$this->mysqliInitialized){
+            $this->initializeMySQLi();
+        }
+        return $this->mysqli; //return \mysqli connection object
     }
 
 
-    //Execute a SQL query (vulnerable in level 1)
+    //Execute SQL query directly (vulnerable - level 1 only)
     //execute queries directly without sanitization => intentional for level 1
     public function query($sql)
     {
-        //log query for just test in development mode
-        if(APP_ENV === 'development'){
-            error_log("SQL Query: " . $sql);
+        if(!$this->mysqliInitialized){
+            $this->initializeMySQLi();
         }
 
-        //Execute query
-        $result = $this->connection->query($sql);
+        //log query for just test (see what queries are running)
+        if(APP_ENV === 'development'){
+            error_log("MySQL Query (vulnerable): " . $sql);
+        }
+
+        //Execute query using mysqli object "so need intialize mysql first"
+        $result = $this->mysqli->query($sql);
 
         //check for errors
         if(!$result){
-            error_log("SQL Error: " . $this->connection->error);
+            error_log("SQL Error: " . $this->mysqli->error);
 
-            //in development
             if(APP_ENV === 'development'){
                 //don't die her,let the caller handle it
                 trigger_error("SQL Error: " . $this->connection->error,E_USER_WARNING);
@@ -122,45 +150,137 @@ class Database
         return $result;
     }
 
+    //get number of affected rows from last query
+    //Useful for UPDATE, DELETE, INSERT queries.
+    public function affectedRows()
+    {
+         if ($this->mysqliInitialized) {
+            return $this->mysqli->affected_rows;
+        }
+        
+        return 0;
+    }
 
-    //get the last inserted auto-increment ID
+
+
+    //---------------------------------------------------
+    //PDO connection (level2&3) 
+    //---------------------------------------------------
+
+    private function initializePDO()
+    {
+
+    }
+
+
+    public function getPDO()
+    {
+
+    }
+
+
+    public function perpare($sql)
+    {
+
+    }
+
+    //---------------------------------------------------
+    //Shared methods
+    //---------------------------------------------------
+
+    //get the last inserted auto-increment
+    //Works for both MySQLi and PDO.
     public function lastInsertId()
     {
-        return $this->connection->insert_id;
+        //Try MySQLi first (Level 1)
+        if ($this->mysqliInitialized) {
+            return $this->mysqli->insert_id;
+        }
+
+        //Try PDO if initialized (Level 2 & 3)
+        if ($this->pdoInitialized) {
+            return $this->pdo->lastInsertId();
+        }
+        
+        return 0;
     }
 
-
-    //Escape a string for use in SQL Query
-    //not enough to prvent sql injection ,level 2 will use prepared statments instaed
-    public function escape($value){
-        return $this->connection->real_escape_string($value);
-    }
-
-
-    //get number of affected rows from last query
-    public function affectedRow(){
-        return $this->connection->affected_rows;
-    }
 
     //close the database connection
     //usually not needed as PHP closes it automatically
+    //But available if you need it for long-running scripts.
     public function close(){
-        if($this->connection){
-            $this->connection->close();
-            self::$instace = null;
+        if ($this->mysqliInitialized && $this->mysqli) {
+            $this->mysqli->close();
+            $this->mysqli = null;
+            $this->mysqliInitialized = false;
+        }
+        
+        if ($this->pdoInitialized) {
+            $this->pdo = null;
+            $this->pdoInitialized = false;
+        }
+        
+        // Reset singleton instance
+        self::$instance = null;
+    }
+
+
+    //---------------------------------------------------
+    //Shared helper methods
+    //---------------------------------------------------
+
+    //Handle connection errors (both MySQLi and PDO)
+    private function handleConnectionError($type, $error, $code)
+    {
+        // ALWAYS log errors (even in production)
+        error_log("═══════════════════════════════════════");
+        error_log("CRITICAL: {$type} Database Connection Failed!");
+        error_log("═══════════════════════════════════════");
+        error_log("Database: " . DB_NAME);
+        error_log("Host: " . DB_HOST);
+        error_log("User: " . DB_USER);
+        error_log("Error: " . $error);
+        error_log("Error Code: " . $code);
+        error_log("Timestamp: " . date('Y-m-d H:i:s'));
+        error_log("═══════════════════════════════════════");
+        
+        if (APP_ENV === 'development') {
+            // Development: Show detailed error (helps debugging)
+            die(json_encode([
+                'success' => false,
+                'message' => "{$type} connection failed",
+                'error' => $error,
+                'error_code' => $code,
+                'database' => DB_NAME,
+                'host' => DB_HOST
+            ], JSON_PRETTY_PRINT));
+        } else {
+            // Production: Generic message (hide sensitive info from users)
+            die(json_encode([
+                'success' => false,
+                'message' => 'Service temporarily unavailable. Please try again later.',
+                'support' => 'If this persists, please contact support.'
+            ], JSON_PRETTY_PRINT));
         }
     }
 
+
+    //---------------------------------------------------
+    //singleton pattern protection 
+    //---------------------------------------------------
+
     //prevent cloning of the instance (singleton pattern)
+    //private to block cloning
     private function __clone()
     {
-        // prevent cloning by making __clone() private it block cloning; to ensuring there is only one istance of the class 
+        // prevent cloning, to ensuring there is only one istance of the class 
     }
 
     //prevent unserializing of the instance (singleton pattern)
     public function __wakeup()
     {
-        // prevents unserializing the singleton object using unserialize()
+        // prevents recreating object from serializel data
         throw new \Exception("Cannot unserialize singleton");
     }
 }
