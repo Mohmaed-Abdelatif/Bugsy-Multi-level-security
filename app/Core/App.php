@@ -59,9 +59,9 @@ class App
     //run the application, called form index
     public function run()
     {
-        echo '<pre>';
-        print_r($this->routes[$this->version]); 
-        echo '<pre>';
+        // echo '<pre>';
+        // print_r($this->routes[$this->version]); 
+        // echo '<pre>';
 
         echo $this->route ."<br>";
         
