@@ -54,11 +54,11 @@ mb_http_output('UTF-8');
 //-------------------------------------------------
 //comment when test withe html
 //headers json API and CORS (cross origin resource sharing)
-// header('Content-type: application/json; charset=utf-8');
-// header('Access-Control-Allow-Origin: *');
-// header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-// header('Access-Control-Allow-Headers: Content-type, Authorization, X-Requested-With');
-// header('Access-Control-Max-Age: 3600');
+header('Content-type: application/json; charset=utf-8');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+header('Access-Control-Allow-Headers: Content-type, Authorization, X-Requested-With');
+header('Access-Control-Max-Age: 3600');
 
 
 // CORS handling opthons request to allow user in front use the api
@@ -75,7 +75,7 @@ when write somthing like that: $db = new Core\Database();
 php will outomatically pass Core\Database to the outoload function
 */
 spl_autoload_register(function ($class) {
-    // Convert namespace to file path
+    //***Convert namespace to file path
     // Example: Core\Database -> app/Core/Database.php
     $class = str_replace('\\', '/', $class);
     

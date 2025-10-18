@@ -1,19 +1,62 @@
-index  
 <?php
-// Load configuration
-require_once '../config/config.php';
+//Entry point for all API requests: All requests flow throughh here thanks to .htaccess rewriting
+//One job: start the app
+//flow: User Request → .htaccess → index.php → App.php → Controller → Model → Database
 
-echo   '<br>'. APP_NAME . '<br>';
 
-echo APP_ENV . '<br>';
-echo APP_URL . '<br>';
+//---------------------------------
+//error handling :for any error in app or deeper
+//---------------------------------
+set_exception_handler(function ($exception) {
+    // Log the error (always, even in production)
+    error_log("═══════════════════════════════════════");
+    error_log("FATAL ERROR: " . $exception->getMessage());
+    error_log("File: " . $exception->getFile() . " Line: " . $exception->getLine());
+    error_log("Trace: " . $exception->getTraceAsString());
+    error_log("═══════════════════════════════════════");
+    
+    // Send clean JSON response
+    http_response_code(500);
+    header('Content-Type: application/json');
+    
+    if (defined('APP_ENV') && APP_ENV === 'development') {
+        // Development: Show detailed error
+        echo json_encode([
+            'success' => false,
+            'error' => 'Application Error',
+            'message' => $exception->getMessage(),
+            'file' => $exception->getFile(),
+            'line' => $exception->getLine(),
+            'trace' => explode("\n", $exception->getTraceAsString())
+        ], JSON_PRETTY_PRINT);
+    } else {
+        // Production: Generic message (hide sensitive info)
+        echo json_encode([
+            'success' => false,
+            'error' => 'Internal Server Error',
+            'message' => 'Something went wrong. Please try again later.',
+            'support' => 'Contact support if this issue persists.'
+        ], JSON_PRETTY_PRINT);
+    }
+    exit;
+});
 
-echo DB_NAME . '<br>';
-echo empty(DB_PASS) ? '(empty)' : '******* (hidden)'  . '<br>'; 
-echo ROOT  . '<br>';
-echo $_SERVER['REQUEST_URI'] .'   =>url i used <br>'; //just show the url you used ,not the path taken
-echo $_SERVER['PHP_SELF'].'       => file running<br>';
-echo $_GET['url'] . '       => url after index.php? <br>' ; //shows only when rewrite url accure in public/.htaccess when use url like this /api/v1/products/5<br>  ,,,,, the goal is how to hander this url to use right controller , routes will help in that' 
 
-echo $_GET['sort']. '            => quere parameter after the url';
+
+//Load configuration
+require_once dirname(__DIR__) . '/config/config.php';
+
+try{
+    //instantiate the App (router)
+    $app = new Core\App();
+
+    //run the application (handles routing,contrillers,erc.)
+    $app->run();
+}catch(Exception $e){
+    //if exist wrong in App or deeper
+    //the global exception handler above will catch this
+    throw $e;
+}
+
+exit(0);
 ?>

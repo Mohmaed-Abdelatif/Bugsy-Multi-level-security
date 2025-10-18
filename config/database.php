@@ -26,9 +26,14 @@ if(file_exists($envFile)){
 
             //store in $_ENV superglobal
             $_ENV[$key] = $value;
+
+            //also store in evvironment (accessible via getenv('key))
+            putenv("$key=$value");
         }
 
     }
+}else{
+    throw new Exception('.env file not found. Please copy .env.example to .env and configure it.');
 }
 
 //define DB cnstants

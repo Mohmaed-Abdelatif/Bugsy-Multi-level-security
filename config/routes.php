@@ -33,7 +33,7 @@ return [
         //public access
         'GET /products'    => 'v1\ProductController@index',
         'GET /search'      => 'v1\ProductController@search',
-        'GET /{id}'        => 'v1\ProductController@show',
+        'GET /products/{id}' => 'V1\ProductController@show',
 
         //category routes
         //public access
@@ -61,8 +61,9 @@ return [
         //anyone can access any user 's data
         'GET /user/{id}'  =>'v1\UserController@show',
         'PUT /user/{id}'  =>'v1\UserController@update',
-        
-    ],
+
+        'GET /test' => 'V1\TestController@index',
+   ],
 
     //level 2 routes secure
     // Base: /api/v2/
