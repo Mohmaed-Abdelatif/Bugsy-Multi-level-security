@@ -59,28 +59,8 @@ class App
     //run the application, called form index
     public function run()
     {
-        // echo '<pre>';
-        // print_r($this->routes[$this->version]); 
-        // echo '<pre>';
+        // echo $this->route ."<br>";
 
-        echo $this->route ."<br>";
-        
-        // Response::notFound();
-        // Response::error("error");
-
-        // if (class_exists("Controllers\V1\ProductController")) {
-        //     echo "yes";
-        // }else{
-        //     echo "no";
-        // }
-
-        // if (class_exists("Helpers\Response")) {
-        //     echo "yes";
-        // }else{
-        //     echo "no";
-        // }
-        
-        //-------------------------------------------
         //set cors headers for all response
         $this->setCorsHeaders();
 
@@ -96,7 +76,7 @@ class App
         //match the route
         $handler = $this->matchRoute();
 
-        echo $handler;
+        // echo $handler;
         if(!$handler){
             //no route matched the url route
             $this->handleNotFound();            return;
@@ -371,6 +351,8 @@ class App
 
 
         // Pass request data to controller
+        // without this : the controller will be blind
+        // controller can't access to request data
         $controller->setRequestData([
             'params' => $this->params,
             'query' => $_GET, //Data passed in the URL after the ? symbol (classic $_GET). so it contine key => value

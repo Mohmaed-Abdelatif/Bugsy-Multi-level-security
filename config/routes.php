@@ -114,13 +114,6 @@ return [
         'GET /search'                    => 'V1\SearchController@all',           // Search everything (future)
         'GET /search/suggestions'        => 'V1\SearchController@suggestions',   // Autocomplete (future)
         'GET /search/trending'           => 'V1\SearchController@trending',      // Trending searches (future)
-        
-
-
-
-
-        //test
-        'GET /test' => 'V1\TestController@index',
    ],
 
     //level 2 routes secure
