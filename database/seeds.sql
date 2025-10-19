@@ -1,6 +1,7 @@
 -- ============================================
 -- E-COMMERCE SAMPLE DATA (SEEDS)
 -- Phones, Tablets, and Electronics
+-- WITH ADMIN USERS
 -- ============================================
 
 USE ecommerce_security;
@@ -29,13 +30,79 @@ INSERT INTO categories (name, description) VALUES
 ('Headphones', 'Headphones, earbuds, and audio devices');
 
 -- ============================================
--- 3. INSERT USERS (Test Users)
+-- 3. INSERT USERS (UPDATED - With Roles)
 -- ============================================
-INSERT INTO users (name, email, password, phone, address) VALUES
-('Ahmed Mohamed', 'ahmed@example.com', '123456', '+201234567890', '123 Tahrir Square, Cairo, Egypt'),
-('Sara Ali', 'sara@example.com', 'password123', '+201098765432', '456 Nile Street, Giza, Egypt'),
-('Mohamed Hassan', 'mohamed@example.com', 'test123', '+201555444333', '789 Alexandria Road, Alex, Egypt'),
-('Fatima Ibrahim', 'fatima@example.com', 'user123', '+201777888999', '321 Pyramids Ave, Giza, Egypt');
+-- V1: Plain text passwords (intentionally vulnerable!)
+-- V2: Will use password_hash()
+
+-- ADMIN USERS
+INSERT INTO users (name, email, password, phone, address, role, is_active) VALUES
+(
+    'Admin User',
+    'admin@bugsy.com',
+    'admin123',  -- V1: Plain text (VULNERABLE!)
+    '+201000000001',
+    'Admin Office, Cairo, Egypt',
+    'admin',
+    TRUE
+),
+(
+    'Super Admin',
+    'superadmin@bugsy.com',
+    'super123',  -- V1: Plain text (VULNERABLE!)
+    '+201000000002',
+    'Admin Office, Cairo, Egypt',
+    'admin',
+    TRUE
+);
+
+-- CUSTOMER USERS
+INSERT INTO users (name, email, password, phone, address, role, is_active) VALUES
+(
+    'Ahmed Mohamed',
+    'ahmed@example.com',
+    '123456',  -- V1: Plain text (VULNERABLE!)
+    '+201234567890',
+    '123 Tahrir Square, Cairo, Egypt',
+    'customer',
+    TRUE
+),
+(
+    'Sara Ali',
+    'sara@example.com',
+    'password123',  -- V1: Plain text (VULNERABLE!)
+    '+201098765432',
+    '456 Nile Street, Giza, Egypt',
+    'customer',
+    TRUE
+),
+(
+    'Mohamed Hassan',
+    'mohamed@example.com',
+    'test123',  -- V1: Plain text (VULNERABLE!)
+    '+201555444333',
+    '789 Alexandria Road, Alex, Egypt',
+    'customer',
+    TRUE
+),
+(
+    'Fatima Ibrahim',
+    'fatima@example.com',
+    'user123',  -- V1: Plain text (VULNERABLE!)
+    '+201777888999',
+    '321 Pyramids Ave, Giza, Egypt',
+    'customer',
+    TRUE
+),
+(
+    'Omar Khaled',
+    'omar@example.com',
+    'pass123',  -- V1: Plain text (VULNERABLE!)
+    '+201666555444',
+    '555 Sphinx Street, Giza, Egypt',
+    'customer',
+    TRUE
+);
 
 -- ============================================
 -- 4. INSERT PRODUCTS - PHONES
@@ -363,12 +430,12 @@ INSERT INTO product_images (product_id, image_url) VALUES
 (14, 'tab-s9-ultra-2.jpg');
 
 -- ============================================
--- 9. INSERT CARTS (for test users)
+-- 9. INSERT CARTS (for test users - CUSTOMERS ONLY)
 -- ============================================
 INSERT INTO carts (user_id) VALUES
-(1), -- Ahmed's cart
-(2), -- Sara's cart
-(3); -- Mohamed's cart
+(3), -- Ahmed's cart (user_id 3)
+(4), -- Sara's cart
+(5); -- Mohamed's cart
 
 -- ============================================
 -- 10. INSERT CART ITEMS (sample cart data)
@@ -376,7 +443,7 @@ INSERT INTO carts (user_id) VALUES
 INSERT INTO cart_items (cart_id, product_id, quantity, price) VALUES
 -- Ahmed's cart (cart_id: 1)
 (1, 1, 1, 52999.00), -- iPhone 15 Pro Max
-(1, 18, 1, 9999.00),  -- AirPods Pro 2
+(1, 20, 1, 9999.00),  -- AirPods Pro 2
 
 -- Sara's cart (cart_id: 2)
 (2, 11, 1, 45999.00), -- iPad Pro
@@ -384,7 +451,7 @@ INSERT INTO cart_items (cart_id, product_id, quantity, price) VALUES
 
 -- Mohamed's cart (cart_id: 3)
 (3, 4, 1, 48999.00),  -- Samsung S24 Ultra
-(3, 19, 2, 7999.00);  -- Galaxy Buds2 Pro x2
+(3, 21, 2, 7999.00);  -- Galaxy Buds2 Pro x2
 
 -- ============================================
 -- 11. INSERT ORDERS (sample order history)
@@ -392,7 +459,7 @@ INSERT INTO cart_items (cart_id, product_id, quantity, price) VALUES
 INSERT INTO orders (order_number, user_id, total, status, payment_method, payment_status, shipping_address, notes) VALUES
 (
     'ORD-20251001-0001',
-    1, -- Ahmed
+    3, -- Ahmed (customer)
     38999.00,
     'delivered',
     'credit_card',
@@ -402,7 +469,7 @@ INSERT INTO orders (order_number, user_id, total, status, payment_method, paymen
 ),
 (
     'ORD-20251005-0002',
-    2, -- Sara
+    4, -- Sara (customer)
     32999.00,
     'shipped',
     'vodafone_cash',
@@ -412,12 +479,32 @@ INSERT INTO orders (order_number, user_id, total, status, payment_method, paymen
 ),
 (
     'ORD-20251008-0003',
-    1, -- Ahmed (second order)
+    3, -- Ahmed (second order)
     62998.00,
     'processing',
     'credit_card',
     'paid',
     '123 Tahrir Square, Cairo, Egypt',
+    NULL
+),
+(
+    'ORD-20251010-0004',
+    5, -- Mohamed
+    28999.00,
+    'pending',
+    'cash_on_delivery',
+    'pending',
+    '789 Alexandria Road, Alex, Egypt',
+    'Call before delivery'
+),
+(
+    'ORD-20251012-0005',
+    6, -- Fatima
+    52999.00,
+    'delivered',
+    'credit_card',
+    'paid',
+    '321 Pyramids Ave, Giza, Egypt',
     NULL
 );
 
@@ -433,7 +520,102 @@ INSERT INTO order_items (order_id, product_id, product_name, quantity, price, su
 
 -- Order 3 items (Ahmed's second order)
 (3, 4, 'Samsung Galaxy S24 Ultra', 1, 48999.00, 48999.00),
-(3, 6, 'Samsung Galaxy A54', 1, 13999.00, 13999.00);
+(3, 6, 'Samsung Galaxy A54', 1, 13999.00, 13999.00),
+
+-- Order 4 items (Mohamed's order)
+(4, 15, 'Samsung Galaxy Tab S9', 1, 28999.00, 28999.00),
+
+-- Order 5 items (Fatima's order)
+(5, 1, 'iPhone 15 Pro Max', 1, 52999.00, 52999.00);
+
+-- ============================================
+-- 13. INSERT SAMPLE AUDIT LOGS (For V2/V3 testing)
+-- ============================================
+-- These demonstrate what audit logs will look like in V2/V3
+INSERT INTO audit_logs (user_id, action, resource_type, resource_id, ip_address, user_agent, request_method, request_url, status_code, details) VALUES
+-- Successful login
+(
+    3,
+    'login_success',
+    'user',
+    3,
+    '192.168.1.100',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+    'POST',
+    '/api/v1/login',
+    200,
+    '{"email": "ahmed@example.com", "login_time": "2025-10-01 10:30:00"}'
+),
+
+-- Failed login attempt (wrong password)
+(
+    NULL,
+    'login_failed',
+    'user',
+    NULL,
+    '192.168.1.105',
+    'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X)',
+    'POST',
+    '/api/v1/login',
+    401,
+    '{"email": "sara@example.com", "reason": "invalid_password", "attempt_time": "2025-10-02 14:15:00"}'
+),
+
+-- Product created (admin action)
+(
+    1,
+    'product_created',
+    'product',
+    1,
+    '192.168.1.50',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)',
+    'POST',
+    '/api/v2/products',
+    201,
+    '{"product_name": "iPhone 15 Pro Max", "price": 52999.00, "admin_id": 1}'
+),
+
+-- Order placed
+(
+    3,
+    'order_placed',
+    'order',
+    1,
+    '192.168.1.100',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+    'POST',
+    '/api/v1/checkout',
+    201,
+    '{"order_number": "ORD-20251001-0001", "total": 38999.00, "items": 1}'
+),
+
+-- IDOR attempt detected (V2/V3 feature)
+(
+    5,
+    'unauthorized_access_attempt',
+    'order',
+    1,
+    '192.168.1.200',
+    'curl/7.68.0',
+    'GET',
+    '/api/v1/orders/1',
+    403,
+    '{"attempted_by": 5, "target_user": 3, "reason": "Tried to access another users order"}'
+),
+
+-- Multiple failed login attempts (potential brute force)
+(
+    NULL,
+    'login_failed',
+    'user',
+    NULL,
+    '10.0.0.99',
+    'Python-requests/2.28.0',
+    'POST',
+    '/api/v1/login',
+    401,
+    '{"email": "admin@bugsy.com", "reason": "invalid_password", "attempt_number": 5}'
+);
 
 -- ============================================
 -- DATABASE SEEDED SUCCESSFULLY!
@@ -442,7 +624,29 @@ INSERT INTO order_items (order_id, product_id, product_name, quantity, price, su
 -- Quick stats
 SELECT 
     (SELECT COUNT(*) FROM users) as total_users,
+    (SELECT COUNT(*) FROM users WHERE role = 'admin') as admin_users,
+    (SELECT COUNT(*) FROM users WHERE role = 'customer') as customer_users,
     (SELECT COUNT(*) FROM brands) as total_brands,
     (SELECT COUNT(*) FROM categories) as total_categories,
     (SELECT COUNT(*) FROM products) as total_products,
-    (SELECT COUNT(*) FROM orders) as total_orders;
+    (SELECT COUNT(*) FROM orders) as total_orders,
+    (SELECT COUNT(*) FROM audit_logs) as audit_log_entries;
+
+-- ============================================
+-- TEST ACCOUNTS REFERENCE
+-- ============================================
+-- 
+-- ADMIN ACCOUNTS (For V2/V3 testing):
+-- Email: admin@bugsy.com        | Password: admin123
+-- Email: superadmin@bugsy.com   | Password: super123
+--
+-- CUSTOMER ACCOUNTS:
+-- Email: ahmed@example.com      | Password: 123456
+-- Email: sara@example.com       | Password: password123
+-- Email: mohamed@example.com    | Password: test123
+-- Email: fatima@example.com     | Password: user123
+-- Email: omar@example.com       | Password: pass123
+--
+-- ⚠️  V1 WARNING: All passwords in PLAIN TEXT (intentionally vulnerable!)
+-- ✅  V2 FIX: Will use password_hash() and password_verify()
+-- ===

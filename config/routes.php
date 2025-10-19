@@ -114,7 +114,18 @@ return [
         'GET /search'                    => 'V1\SearchController@all',           // Search everything (future)
         'GET /search/suggestions'        => 'V1\SearchController@suggestions',   // Autocomplete (future)
         'GET /search/trending'           => 'V1\SearchController@trending',      // Trending searches (future)
-   ],
+   
+   
+        // Test routes (temporary - remove after testing)
+        'GET /test'                  => 'V1\TestController@index',
+        'GET /test/query'            => 'V1\TestController@testQuery',
+        'GET /test/param/{id}'       => 'V1\TestController@testParam',
+        'POST /test/body'            => 'V1\TestController@testBody',
+        'POST /test/validation'      => 'V1\TestController@testValidation',
+        'GET /test/error'            => 'V1\TestController@testError',
+        'GET /test/pagination'       => 'V1\TestController@testPagination',
+   
+    ],
 
     //level 2 routes secure
     // Base: /api/v2/

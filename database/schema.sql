@@ -1,6 +1,12 @@
 -- ============================================
 -- E-COMMERCE DATABASE SCHEMA
 -- For Phones, Tablets, and Electronics Store
+-- WITH ROLE-BASED ACCESS CONTROL (RBAC)
+-- ============================================
+-- ============================================
+-- E-COMMERCE DATABASE SCHEMA (UPDATED)
+-- For Phones, Tablets, and Electronics Store
+-- WITH ROLE-BASED ACCESS CONTROL (RBAC)
 -- ============================================
 
 -- Create database
@@ -9,7 +15,7 @@ CREATE DATABASE IF NOT EXISTS ecommerce_security CHARACTER SET utf8mb4 COLLATE u
 USE ecommerce_security;
 
 -- ============================================
--- 1. USERS TABLE
+-- 1. USERS TABLE (UPDATED - Added role field)
 -- ============================================
 CREATE TABLE users (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -18,8 +24,12 @@ CREATE TABLE users (
     password VARCHAR(255) NOT NULL,
     phone VARCHAR(20),
     address TEXT,
+    role ENUM('customer', 'admin') DEFAULT 'customer', -- NEW: User role
+    is_active BOOLEAN DEFAULT TRUE, -- NEW: Can deactivate users
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_email (email)
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_email (email),
+    INDEX idx_role (role)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================
@@ -60,12 +70,14 @@ CREATE TABLE products (
     rating DECIMAL(3,2) DEFAULT 0.00,
     is_available BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (brand_id) REFERENCES brands(id) ON DELETE CASCADE,
     FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE,
     INDEX idx_brand (brand_id),
     INDEX idx_category (category_id),
     INDEX idx_rating (rating),
-    INDEX idx_price (price)
+    INDEX idx_price (price),
+    INDEX idx_available (is_available)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================
@@ -102,6 +114,7 @@ CREATE TABLE cart_items (
     quantity INT NOT NULL DEFAULT 1,
     price DECIMAL(10,2) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (cart_id) REFERENCES carts(id) ON DELETE CASCADE,
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
     INDEX idx_cart (cart_id),
@@ -150,5 +163,46 @@ CREATE TABLE order_items (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================
--- DATABASE SCHEMA CREATED SUCCESSFULLY!
+-- 10. SESSIONS TABLE (For V2/V3 - JWT Token Management)
 -- ============================================
+-- Optional: Track active sessions, revoked tokens, etc.
+-- Useful for V2/V3 advanced security features
+CREATE TABLE sessions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    token_hash VARCHAR(255) NOT NULL UNIQUE, -- SHA256 hash of JWT token
+    ip_address VARCHAR(45),
+    user_agent TEXT,
+    expires_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_user (user_id),
+    INDEX idx_token (token_hash),
+    INDEX idx_expires (expires_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================
+-- 11. AUDIT_LOGS TABLE (For V2/V3 - Security Tracking)
+-- ============================================
+-- Track all important actions for security analysis
+-- Critical for V3 AI threat detection
+CREATE TABLE audit_logs (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NULL, -- NULL for unauthenticated actions
+    action VARCHAR(100) NOT NULL, -- 'login', 'logout', 'create_order', 'update_product', etc.
+    resource_type VARCHAR(50), -- 'user', 'product', 'order', etc.
+    resource_id INT, -- ID of the affected resource
+    ip_address VARCHAR(45),
+    user_agent TEXT,
+    request_method VARCHAR(10), -- GET, POST, PUT, DELETE
+    request_url TEXT,
+    status_code INT, -- HTTP status code
+    details JSON, -- Additional context (old_value, new_value, etc.)
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_user (user_id),
+    INDEX idx_action (action),
+    INDEX idx_resource (resource_type, resource_id),
+    INDEX idx_created (created_at),
+    INDEX idx_ip (ip_address)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
