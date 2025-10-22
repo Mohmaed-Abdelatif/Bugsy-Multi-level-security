@@ -3,8 +3,20 @@ namespace Controllers\V1;
 
 use Controllers\BaseController;
 
+use Models\v1\Product;
+
 class TestController extends BaseController
 {
+    public function testProduct($id){
+        $prodcut = new Product();
+
+        $item = $prodcut->find($id);
+        var_dump($item);
+    }
+
+
+
+
     // Test 1: Basic response
     public function index()
     {

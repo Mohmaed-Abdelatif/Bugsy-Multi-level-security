@@ -124,6 +124,7 @@ return [
         'POST /test/validation'      => 'V1\TestController@testValidation',
         'GET /test/error'            => 'V1\TestController@testError',
         'GET /test/pagination'       => 'V1\TestController@testPagination',
+        'GET /test/product/{id}'       => 'V1\TestController@testProduct',
    
     ],
 
