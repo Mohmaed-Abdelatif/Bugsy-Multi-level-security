@@ -100,30 +100,46 @@ use Models\v1\Product;
 // In a test controller:
 $product = new Product();
 
-// for mysql
-// // Test 1: Find by ID
-// $item = $product->find(1);
-// var_dump($item); // Should show iPhone 15 Pro Max
+$item = $product->find(1);
+echo "<h2>Test 1: Find Product #1</h2>";
+echo "<pre>";
+print_r($item);
+echo "</pre>";
 
-// // Test 2: Get all products
-// $all = $product->findAll();
-// var_dump(count($all)); // Should show 22
+// Test 2: Get all products
+$all = $product->findAll(5); // First 5 products
 
-// // Test 3: Query builder
-// $expensive = $product->where('price', '>', 40000)
-//                      ->orderBy('price', 'DESC')
-//                      ->findAll();
-// var_dump($expensive); // Should show expensive products
-// $expensive = $product->db->query("SELECT * FROM products where price > 40000        ");
-//  $rows = [];
-// while ($row = $expensive->fetch_assoc()) {
-//                 $rows[] = $row;
-// }
-// var_dump($rows);
+echo "<h2>Test 2: First 5 Products</h2>";
+echo "<pre>";
+print_r($all);
+echo "</pre>";
 
-// Test 4: Pagination
-$paginated = $product->paginate(10, 0);
-var_dump($paginated); // Should show first 10 products with pagination info
+// Test 3: Get product with details
+$detailed = $product->getWithNames(1);
+
+echo "<h2>Test 3: Product with Category/Brand</h2>";
+echo "<pre>";
+print_r($detailed);
+echo "</pre>";
+
+// Test 4: Search products
+$results = $product->searchByName('iPhone', 5);
+
+echo "<h2>Test 4: Search 'iPhone'</h2>";
+echo "<pre>";
+print_r($results);
+echo "</pre>";
+
+// Test 5: Query builder
+$expensive = $product->where('price', '>', 40000)
+                     ->orderBy('price', 'DESC')
+                     ->limit(5)
+                     ->findAll();
+
+echo "<h2>Test 5: Products > 40,000 EGP</h2>";
+echo "<pre>";
+print_r($expensive);
+echo "</pre>";
 
 
 
