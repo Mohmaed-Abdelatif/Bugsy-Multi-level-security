@@ -198,6 +198,9 @@ class BaseModel
        //add order by clause from query builder
         $orderByClause = $this->buildOrderByClause();
         $sql .= $orderByClause;
+       //add limit clause from query builder
+        $limitClause = $this->buildLimitClause();
+        $sql .= $limitClause;
 
         // Apply limit and offset
         if ($limit !== null) {
@@ -562,7 +565,7 @@ class BaseModel
         $page = $offset > 0 ? floor($offset / $perPage) + 1 : 1;
         
         return [
-            'data' => $data,
+            'data' => $data, //just data with limit no thing else
             'total' => $total,
             'perPage' => $perPage,
             'page' => $page,
@@ -647,6 +650,21 @@ class BaseModel
         }
         
         return ' ORDER BY ' . implode(', ', $this->queryBuilder['orderBy']);
+    }
+
+    protected function buildLimitClause()
+    {
+        if (!isset($this->queryBuilder['limit'])) {
+            return '';
+        }
+
+        $limitClause = ' LIMIT ' . $this->queryBuilder['limit'];
+
+        if (isset($this->queryBuilder['offset'])) {
+            $limitClause .= ' OFFSET ' . $this->queryBuilder['offset'];
+        }
+
+        return $limitClause;
     }
 
     //reset query builder state
