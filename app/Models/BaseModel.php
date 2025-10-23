@@ -553,19 +553,22 @@ class BaseModel
      *     'totalPages' => 5        // Total pages
      * ]
      */
-    public function paginate($perPage = 20, $offset = 0)
+   public function paginate($perPage = 20, $offset = 0)
     {
-        // Get total count (before applying limit)
-        $total = $this->count();
-        
+        // Clone the query to preserve filters
+        $countQuery = clone $this;
+
+        // Get total count with filters
+        $total = $countQuery->count();
+
         // Get page data
         $data = $this->limit($perPage, $offset)->findAll();
-        
+
         // Calculate page number
         $page = $offset > 0 ? floor($offset / $perPage) + 1 : 1;
-        
+
         return [
-            'data' => $data, //just data with limit no thing else
+            'data' => $data,
             'total' => $total,
             'perPage' => $perPage,
             'page' => $page,

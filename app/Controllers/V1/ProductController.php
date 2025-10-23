@@ -86,17 +86,23 @@ class ProductController extends BaseController
         $query->orderBy($sortField, $sortOrder);
 
         //get products data and paginate result
-        $productResult = $query->limit($pagination['perPage'])->findAll();
-        // $paginationResult = $query->paginate($pagination['perPage'],$pagination['offset']); //broke query bilder
+        // $productResult = $query->limit($pagination['perPage'])->findAll();
+        $results = $query->paginate($pagination['perPage'],$pagination['offset']); //broke query bilder
         //get products with full details (category and brand names)
         $products = [];
-        foreach($productResult as $product){
+        foreach($results['data'] as $product){
             $products[] = $this->productModel->getWithNames($product['id']);
         }
 
         //return response
         return $this->json([
             'products' => $products,
+            'pagination' => [
+                'total' => $results['total'],
+                'perPage' => $results['perPage'],
+                'page' => $results['page'],
+                'totalPages' => $results['totalPages']
+            ],
             'filters' => [
                 'category' => $categoryId,
                 'brand' => $brandId,
