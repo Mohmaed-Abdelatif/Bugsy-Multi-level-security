@@ -95,10 +95,10 @@ require_once '../config/config.php';
 // }
 //--------------------------------------
 //test basemodel
-use Models\v1\Product;
+// use Models\v1\Product;
 
-// In a test controller:
-$product = new Product();
+// // In a test controller:
+// $product = new Product();
 
 // $item = $product->find(1);
 
@@ -153,13 +153,61 @@ $product = new Product();
 // echo "</pre>";
 
 
-$expensive = $product->where('price', '>', 40000)
-                     ->orderBy('price', 'DESC')
-                     ->paginate(2); // not make any wher or order befor it ,just make pagination 
+// $expensive = $product->where('price', '>', 40000)
+//                      ->orderBy('price', 'DESC')
+//                      ->paginate(2); //solved
 
-echo "<h2>Test 5: Products > 40,000 EGP</h2>";
+// echo "<h2>Test 5: Products > 40,000 EGP</h2>";
+// echo "<pre>";
+// print_r($expensive);
+// echo "</pre>";
+
+
+// use Models\v1\Brand;
+// $brand = new Brand;
+
+// $itme = $brand->find(2);
+// $items = $brand->findAll();
+// $itemsWithCounts = $brand->getAllWithCount();
+// $popular = $brand->getPopular();
+// $searsh = $brand->searchByName("apple");
+
+// echo "<pre>";
+// print_r($searsh);
+// echo "</pre>";
+
+
+// use Models\v1\Category;
+// $brand = new Category;
+
+// $itme = $brand->find(2);
+// $items = $brand->findAll();
+// $itemsWithCounts = $brand->getAllWithCount();
+// $popular = $brand->getPopular();
+// $searsh = $brand->searchByName("phone");
+
+// echo "<pre>";
+// print_r($itme);
+// echo "</pre>";
+
+use Models\v1\Cart;
+$brand = new Cart;
+
+$itme = $brand->find(2);
+$items = $brand->findAll();
+$cart = $brand->getWithItems(1);
+$add = $brand->addItem(2,10,2,10000); // need edite
+$edquan = $brand->updateItemQuantity(7,2); //need edite
+$remove = $brand->removeItem(8);
+$clear = $brand->clearCart(1);
+$validatae = $brand->validateForCheckout(1);
+$count = $brand->getItemCount(2);
+$syn = $brand->syncPrices(2);
+$abon = $brand->getAbandoned();
+
+
 echo "<pre>";
-print_r($expensive);
+print_r($abon);
 echo "</pre>";
 
 ?>

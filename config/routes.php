@@ -116,16 +116,6 @@ return [
         'GET /search/trending'           => 'V1\SearchController@trending',      // Trending searches (future)
    
    
-        // Test routes (temporary - remove after testing)
-        'GET /test'                  => 'V1\TestController@index',
-        'GET /test/query'            => 'V1\TestController@testQuery',
-        'GET /test/param/{id}'       => 'V1\TestController@testParam',
-        'POST /test/body'            => 'V1\TestController@testBody',
-        'POST /test/validation'      => 'V1\TestController@testValidation',
-        'GET /test/error'            => 'V1\TestController@testError',
-        'GET /test/pagination'       => 'V1\TestController@testPagination',
-        'GET /test/product/{id}'       => 'V1\TestController@testProduct',
-   
     ],
 
     //level 2 routes secure
