@@ -266,6 +266,7 @@ class ProductController extends BaseController
     //create new product (admin only) : post /api/v1/products
     public function create()
     {
+        $this->requireAdmin();
         // Get input data
         $data = $this->getAllInput();
         
@@ -319,6 +320,7 @@ class ProductController extends BaseController
     //update product (admin only) : put /api/v1/products/{id}
     public function update($id)
     {
+        $this->requireAdmin();
         // Validate ID
         if (!$id || !is_numeric($id)) {
             return $this->error('Invalid product ID', 400);
@@ -369,6 +371,7 @@ class ProductController extends BaseController
     //delete product (admin only) : delete /api/v1/products/{id}
     public function delete($id)
     {
+        $this->requireAdmin();
         // Validate ID
         if (!$id || !is_numeric($id)) {
             return $this->error('Invalid product ID', 400);

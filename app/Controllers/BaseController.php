@@ -9,6 +9,8 @@
 // - Handle authentication (placeholder in V1, real in V2/V3)
 // - Scalability: Ready for V2/V3 features
 
+// UPDATED: Added session-based authentication for V1
+
 namespace Controllers;
 
 use Core\Database;
@@ -37,6 +39,12 @@ class BaseController
     {
         //get database instance (singleton pattern ensure only one connection)
         $this->db = Database::getInstance();
+
+        // Start session if not already started
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
 
         if (APP_ENV === 'development') {
             error_log("BaseController: DB connected");
@@ -215,65 +223,135 @@ class BaseController
 
 
     //---------------------------------------------
-    //Authentication methods(for v2/3)
+    //Authentication methods weak auth for v1 , jwt for v2&3
     //---------------------------------------------
 
-    //V1: Always returns true (no authentication)
-    // Users pass user_id in request body/query (VULNERABLE!)
-    //V2: Checks JWT token from Authorization header
-    // User_id extracted from token (SECURE!)
-    //V3: Checks JWT + 2FA verification
-    //return bool True if authenticated (always true in V1)
+    //Require authentication
+    // V1: Session-based check
+    // V2: JWT validation
+    // V3: JWT + 2FA
+    // return bool True if authenticated, false otherwise (sends error and exits)
     protected function requireAuth()
     {
-        //v1: No authentication (intentionally vulnerable)
-        //Anyone can access any endpoint
-        //Users just pass user_id in request - NO VERIFICATION!
-        return true;
+         if ($this->getVersion() === 'v1') {
+            // V1: Check session
+            if (!$this->isLoggedIn()) {
+                $this->error('Authentication required. Please login.', 401);
+                exit; // Stop execution
+            }
+            
+            // Load user data from session into $this->user
+            $this->user = $this->getUserFromSession();
+            
+            return true;
+            
+        } else {
+            // V2/V3: JWT validation
+            /*// V2 TODO: Implement JWT validation
+             
+             
+             // Get JWT token from Authorization header
+             $token = $this->getBearerToken();
+             
+             if (!$token) {
+                 $this->error('Unauthorized - No token provided', 401);
+                 return false;
+             }
+             
+             // Decode and validate token
+             $decoded = JWT::decode($token, JWT_SECRET);
+             
+             if (!$decoded) {
+                 $this->error('Unauthorized - Invalid token', 401);
+                 return false;
+             }
+             
+             // Store authenticated user data
+             $this->user = [
+                 'id' => $decoded['user_id'],
+                 'email' => $decoded['email'],
+                 'name' => $decoded['name'],
+                 'role' => $decoded['role']  // 'customer', 'admin', etc.
+             ];
+             
+             return true;
+             */
+             
+             // V3 TODO: Add 2FA check
+             /*
+             // After JWT validation, check if 2FA required
+             if ($this->user['requires_2fa'] && !$this->verify2FA()) {
+                 $this->error('2FA verification required', 403);
+                 return false;
+             }
+            */
+            $this->error('V2/V3 authentication not implemented yet', 501);
+            exit;
+        }
 
-        // V2 TODO: Implement JWT validation
-        /*
-        // Get JWT token from Authorization header
-        $token = $this->getBearerToken();
         
-        if (!$token) {
-            $this->error('Unauthorized - No token provided', 401);
+    }
+
+
+    //require admin role
+    // check if current user is authenticated and has admin role
+    protected function requireAdmin()
+    {
+        // First check if user is authenticated
+        if (!$this->requireAuth()) {
             return false;
         }
         
-        // Decode and validate token
-        $decoded = JWT::decode($token, JWT_SECRET);
-        
-        if (!$decoded) {
-            $this->error('Unauthorized - Invalid token', 401);
-            return false;
+        // Check if user has admin role
+        if (!$this->isAdmin()) {
+            $this->error('Admin access required. You do not have permission.', 403);
+            exit;
         }
-        
-        // Store authenticated user data
-        $this->user = [
-            'id' => $decoded['user_id'],
-            'email' => $decoded['email'],
-            'name' => $decoded['name'],
-            'role' => $decoded['role']  // 'customer', 'admin', etc.
-        ];
         
         return true;
-        */
-        
-        // V3 TODO: Add 2FA check
-        /*
-        // After JWT validation, check if 2FA required
-        if ($this->user['requires_2fa'] && !$this->verify2FA()) {
-            $this->error('2FA verification required', 403);
+    }
+
+
+    //check if user is logged in
+    // v1 check php session
+    private function isLoggedIn()
+    {
+        return isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true;
+    }
+
+
+    //check if current user is admin
+    // must be called after requreauth() to access admin role
+     protected function isAdmin()
+    {
+        if (!$this->user) {
             return false;
         }
-        */
+        
+        return $this->user['role'] === 'admin';
     }
 
 
 
-    //Get current authenticated user (PLACEHOLDER for V2 &v3)
-    //V1 Usage (VULNERABLE):Controller must get user_id from request:
+    //get user data from session
+    // v1 read from $_session
+     private function getUserFromSession()
+    {
+        if (!$this->isLoggedIn()) {
+            return null;
+        }
+
+        return [
+            'id' => $_SESSION['user_id'] ?? null,
+            'email' => $_SESSION['user_email'] ?? null,
+            'name' => $_SESSION['user_name'] ?? null,
+            'role' => $_SESSION['user_role'] ?? 'customer'
+        ];
+    }
+
+
+    //Get current authenticated user 
+    //V1 Usage (VULNERABLE):Controller must get user_id from request or session:
     // $userId = $this->getInput('user_id');  // Anyone can fake this!
     //V2 Usage (SECURE):Controller gets user from authenticated token:
     // $user = $this->getUser();
@@ -295,26 +373,31 @@ class BaseController
 
 
 
-    //Get user_id for V1 operations (HELPER METHOD)
-    // V1: Gets user_id from request body or query (VULNERABLE!)
+    //get current user_id for V1 operations (HELPER METHOD)
+    // V1: Gets user_id from session after requireAuth()
     // V2/V3: Gets user_id from authenticated JWT token (SECURE!)
     //This method bridges V1 and V2/V3 behavior
-    protected function getUserId($source = 'body')
+    protected function getUserId()
     {
-        $version = $this->getVersion();
-        
-        if ($version === 'v1') {
-            // V1: Get user_id from request (VULNERABLE!)
-            if ($source === 'body') {
-                return $this->getInput('user_id');
-            } else {
-                return $this->getQuery('user_id');
-            }
-        } else {
-            // V2/V3: Get user_id from authenticated token (SECURE!)
-            $user = $this->getUser();
-            return $user ? $user['id'] : null;
+        if (!$this->user) {
+            return null;
         }
+        
+        return $this->user['id'];
+
+        // $version = $this->getVersion();
+        // if ($version === 'v1') {
+        //     // V1: Get user_id from request (VULNERABLE!)
+        //     // if ($source === 'body') {
+        //     //     return $this->getInput('user_id');
+        //     // } else {
+        //     //     return $this->getQuery('user_id');
+        //     // }
+        // } else {
+        //     // V2/V3: Get user_id from authenticated token (SECURE!)
+        //     $user = $this->getUser();
+        //     return $user ? $user['id'] : null;
+        // }
     }
 
 
@@ -324,17 +407,21 @@ class BaseController
     //  V2/V3: Compares resource owner with authenticated user (SECURE!)
     protected function checkOwnership($resourceUserId, $errorMessage = 'You do not have access to this resource')
     {
-        if ($this->getVersion() === 'v1') {
-            // V1: No ownership checks (VULNERABLE!)
+        // Make sure user is authenticated first
+        if (!$this->user) {
+            $this->error('Authentication required', 401);
+            exit;
+        }
+        
+        // Admin can access everything
+        if ($this->isAdmin()) {
             return true;
         }
         
-        // V2/V3: Check ownership (SECURE!)
-        $user = $this->getUser();
-        
-        if (!$user || $user['id'] != $resourceUserId) {
+        // Check if user owns the resource
+        if ($this->user['id'] != $resourceUserId) {
             $this->error($errorMessage, 403);
-            return false;
+            exit;
         }
         
         return true;
@@ -345,18 +432,11 @@ class BaseController
     //Check if user has permission (PLACEHOLDER for V2/V3)
     protected function checkPermission($permission)
     {
-        // V1: No permissions (everyone can do everything)
-        return true;
+        // V1: simple role chek
+        // admin has all permissions,cutomers have none
+        return $this->isAdmin();
         
-        // V2/V3 TODO: Implement role-based access control
-        /*
-        $user = $this->getUser();
-        if (!$user) {
-            return false;
-        }
-        
-        return in_array($permission, $user['permissions']);
-        */
+        // V2/V3 TODO: Implement proper RBAC with permissions table
     }
 
 
@@ -398,6 +478,13 @@ class BaseController
         }
         
         // V2/V3 TODO: Store in audit log table
+        // This will include:
+        // - user_id (who did the action)
+        // - action (what they did)
+        // - resource_type (what they modified)
+        // - resource_id (which specific record)
+        // - ip_address (where from)
+        // - timestamp (when)
     }
 
 }

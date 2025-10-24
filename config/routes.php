@@ -115,7 +115,14 @@ return [
         'GET /search/suggestions'        => 'V1\SearchController@suggestions',   // Autocomplete (future)
         'GET /search/trending'           => 'V1\SearchController@trending',      // Trending searches (future)
    
-   
+        
+
+
+        'GET /test/public'             => 'V1\TestController@publicTest',
+        'GET /test/protected'          => 'V1\TestController@protectedTest',
+        'GET /test/admin'              => 'V1\TestController@adminTest',
+        'GET /test/session'            => 'V1\TestController@sessionInfo',
+        'GET /test/ownership/{user_id}' => 'V1\TestController@ownershipTest',
     ],
 
     //level 2 routes secure

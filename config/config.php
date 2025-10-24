@@ -59,7 +59,7 @@ header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-type, Authorization, X-Requested-With');
 header('Access-Control-Max-Age: 3600');
-
+header('Access-Control-Allow-Credentials: true');
 
 // CORS handling opthons request to allow user in front use the api
 if($_SERVER['REQUEST_METHOD'] === 'OPTIONS'){
@@ -96,9 +96,8 @@ spl_autoload_register(function ($class) {
 
 
 //----------------------------------------
-//session for levels 2&3 , not used in level 1
-// if(session_status() === PHP_SESSION_NONE){
-//     session_start();
-// }
+if(session_status() === PHP_SESSION_NONE){
+    session_start();
+}
 
 
