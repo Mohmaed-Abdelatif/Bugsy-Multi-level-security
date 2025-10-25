@@ -54,15 +54,38 @@ mb_http_output('UTF-8');
 //-------------------------------------------------
 //comment when test withe html
 //headers json API and CORS (cross origin resource sharing)
-header('Content-type: application/json; charset=utf-8');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-type, Authorization, X-Requested-With');
-header('Access-Control-Max-Age: 3600');
-header('Access-Control-Allow-Credentials: true');
+header('Content-Type: application/json; charset=utf-8');
 
-// CORS handling opthons request to allow user in front use the api
-if($_SERVER['REQUEST_METHOD'] === 'OPTIONS'){
+// Get the requesting origin
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+if (APP_ENV === 'development') {
+    // Development: Allow localhost, 127.0.0.1, and null (file://)
+    if (preg_match('/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/', $origin)) {
+    header("Access-Control-Allow-Origin: {$origin}");
+    header("Access-Control-Allow-Credentials: true");
+    }
+
+} else {
+    // Production: Only specific domains
+    $allowedOrigins = [
+        'https://mydomain.com',
+        'https://www.mydomain.com'
+    ];
+    
+    if (in_array($origin, $allowedOrigins)) {
+        header("Access-Control-Allow-Origin: {$origin}");
+    }
+}
+// CRITICAL: Allow credentials (cookies/sessions)
+header('Access-Control-Allow-Credentials: true');
+// Allow these methods
+header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+// Allow these headers
+header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
+// Cache preflight for 1 hour
+header('Access-Control-Max-Age: 3600');
+// Handle OPTIONS preflight request
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit();
 }

@@ -31,16 +31,16 @@
 #CORS headers handelar extra for make sure front can call API
 #------------------------------------
 
-<IfModule mod_headers.c>
-    # Allow any origin (change * to specific domain in production)
-    Header always set Access-Control-Allow-Origin "*"
-    # Allow these HTTP methods
-    Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
-    # Allow these headers
-    Header always set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With"
-    # Cache preflight requests for 1 hour
-    Header always set Access-Control-Max-Age "3600"
-</IfModule>
+# <IfModule mod_headers.c>
+#     # Allow any origin (change * to specific domain in production)
+#     Header always set Access-Control-Allow-Origin "*"
+#     # Allow these HTTP methods
+#     Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+#     # Allow these headers
+#     Header always set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With"
+#     # Cache preflight requests for 1 hour
+#     Header always set Access-Control-Max-Age "3600"
+# </IfModule>
 
 
 #------------------------------------

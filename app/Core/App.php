@@ -62,7 +62,7 @@ class App
         // echo $this->route ."<br>";
 
         //set cors headers for all response
-        $this->setCorsHeaders();
+        // $this->setCorsHeaders();
 
         //Handle OPTIONS preflight requests (for CORS)
         if ($this->method === 'OPTIONS') {
@@ -426,23 +426,30 @@ class App
 
     //set CORS headers for cross origin requests
     //Allows frontend to call this API
-    private function setCorsHeaders()
-    {
-        // Allow requests from any origin (change in production!)
-        header('Access-Control-Allow-Origin: *');
+    // private function setCorsHeaders()
+    // {
+    //     header_remove();
+    //     // Get origin
+    //     $origin = $_SERVER['HTTP_ORIGIN'] ?? '*';
         
-        // Allow these HTTP methods
-        header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+    //     // Allow origin
+    //     header("Access-Control-Allow-Origin: {$origin}");
         
-        // Allow these headers
-        header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
+    //     // CRITICAL: Allow credentials (cookies)
+    //     header('Access-Control-Allow-Credentials: true');
         
-        // Cache preflight requests for 1 hour
-        header('Access-Control-Max-Age: 3600');
+    //     // Allow methods
+    //     header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
         
-        // Always return JSON
-        header('Content-Type: application/json; charset=utf-8');
-    }
+    //     // Allow headers
+    //     header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
+        
+    //     // Cache preflight
+    //     header('Access-Control-Max-Age: 3600');
+        
+    //     // Always return JSON
+    //     header('Content-Type: application/json; charset=utf-8');
+    // }
 
 
 
