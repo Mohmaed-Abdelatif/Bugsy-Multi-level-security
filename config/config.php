@@ -59,17 +59,36 @@ header('Content-Type: application/json; charset=utf-8');
 // Get the requesting origin
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 if (APP_ENV === 'development') {
-    // Development: Allow localhost, 127.0.0.1, and null (file://)
-    if (preg_match('/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/', $origin)) {
-    header("Access-Control-Allow-Origin: {$origin}");
-    header("Access-Control-Allow-Credentials: true");
+    // Development: Allow localhost variants (including ports)
+    $allowedOrigins = [
+        'http://localhost',
+        'http://localhost:3000',
+        'http://localhost:5173',
+        'http://localhost:5500',  
+        'http://localhost:8080',
+        'http://127.0.0.1',
+        'http://127.0.0.1:3000',
+        'http://127.0.0.1:5173',
+        'http://127.0.0.1:5500',  
+    ];
+    
+    // Check if origin is in allowed list OR matches localhost pattern
+    if (in_array($origin, $allowedOrigins) || 
+        strpos($origin, 'http://localhost') === 0 || 
+        strpos($origin, 'http://127.0.0.1') === 0) {
+        header("Access-Control-Allow-Origin: {$origin}");
     }
 
 } else {
     // Production: Only specific domains
     $allowedOrigins = [
-        'https://mydomain.com',
-        'https://www.mydomain.com'
+        'https://yourdomain.com',
+        'https://www.yourdomain.com',
+        'https://app.yourdomain.com',
+        //for local frontend development:
+        'http://localhost:3000',        
+        'http://localhost:5173',        
+        'http://127.0.0.1:3000',
     ];
     
     if (in_array($origin, $allowedOrigins)) {
