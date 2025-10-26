@@ -193,21 +193,4 @@ require_once '../config/config.php';
 use Models\v1\Cart;
 $brand = new Cart;
 
-$itme = $brand->find(2);
-$items = $brand->findAll();
-$cart = $brand->getWithItems(1);
-$add = $brand->addItem(2,10,2,10000); // need edite
-$edquan = $brand->updateItemQuantity(7,2); //need edite
-$remove = $brand->removeItem(8);
-$clear = $brand->clearCart(1);
-$validatae = $brand->validateForCheckout(1);
-$count = $brand->getItemCount(2);
-$syn = $brand->syncPrices(2);
-$abon = $brand->getAbandoned();
-
-
-echo "<pre>";
-print_r($abon);
-echo "</pre>";
-
 ?>

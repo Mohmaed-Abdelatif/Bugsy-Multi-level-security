@@ -3,7 +3,7 @@
  * Cart Model (v1 intentionally vulnerable)
  * 
  * vulnerablitey:
- * - no user authentication (anyone can access any cart)
+ * - Each user has ONE cart and it is the only allowed for him (can only access their own cart)
  * - user_id passed in request (IDOR)
  * - Direct price manipulation possible
  * - no stock validation
@@ -20,16 +20,19 @@ class Cart extends BaseModel
     protected $primaryKey = 'id';
     protected $timestamps = true;
 
-    /**
-     * get or create cart for user
-     * v1: user_id from request ( anyone can fake it)
-     * v2: user_id from JWT token
-    */
+
+
+
+    //---------------------------------------
+    // Cart Management
+    //---------------------------------------
+
+    //get or create cart for user (If user doesn't have cart, creates one)
+    //v1: user_id from request ( anyone can fake it) so will add authe in controller
     public function getOrCreate($userId)
     {
-        // Find existing cart
-        $cart = $this->where('user_id', '=', $userId)
-                     ->first();
+        // Check if user already has cart
+        $cart = $this->getByUserId($userId);
         
         if ($cart) {
             return $cart;
@@ -40,12 +43,90 @@ class Cart extends BaseModel
             'user_id' => $userId,
         ]);
         
-        return $this->find($cartId);
+       if ($cartId) {
+            return $this->find($cartId);
+        }
+
+        return null;
     }
 
 
-    // get cart with items and product details
-    public function getWithItems($userId)
+    //get cart by user id
+    public function getByUserId($userId)
+    {
+        $userId = $this->connection->real_escape_string($userId);
+        $sql = "SELECT * FROM {$this->table} WHERE user_id = '{$userId}' LIMIT 1";
+        
+        $result = $this->connection->query($sql);
+        
+        if (!$result) {
+            $this->logError("GetByUserId failed", $sql);
+            return null;
+        }
+        
+        $cart = $result->fetch_assoc();
+        $result->free();
+        
+        return $cart ?: null;
+    }
+
+
+
+    // get cart with all items including product info
+    public function getWithItems($cartId)
+    {
+        //no need to use ger or create coz if didnot exist cart for this user no need to return his new created impty cart
+        //so will make method separated if needed to get by userid
+        // $cart = $this->getOrCreate($userId);
+
+        // Get cart
+        $cart = $this->find($cartId);
+        
+        if (!$cart) {
+            return null;
+        }
+        
+        // Get cart items with product details
+        $sql = "
+            SELECT 
+                ci.*,
+                p.name as product_name,
+                p.price as product_price,
+                p.main_image as product_image,
+                p.stock as product_stock,
+                p.is_available as product_available,
+                (ci.quantity * ci.price) as subtotal
+            FROM cart_items ci
+            LEFT JOIN products p ON ci.product_id = p.id
+            WHERE ci.cart_id = '{$cartId}'
+            ORDER BY ci.created_at DESC
+        ";
+
+        
+        $result = $this->connection->query($sql);
+        
+        $items = [];
+        $total = 0;
+        
+        if ($result) {
+            while ($row = $result->fetch_assoc()) {
+                $items[] = $row;
+                $total += $row['subtotal'];
+
+            }
+            $result->free();
+        }
+        
+        $cart['items'] = $items;
+        $cart['total'] = $total;
+        $cart['item_count'] = count($items);
+        
+        return $cart;
+    }
+
+
+    //get cart with items by user id if user dont have  => creat one
+    public function getUserCartWithItems($userId)
     {
         $cart = $this->getOrCreate($userId);
         
@@ -53,199 +134,102 @@ class Cart extends BaseModel
             return null;
         }
         
-        // Get cart items with product details (VULNERABLE query)
-        $sql = "SELECT 
-                    ci.*,
-                    p.name as product_name,
-                    p.price as current_price,
-                    p.main_image,
-                    p.stock as available_stock,
-                    (ci.quantity * ci.price) as item_total
-                FROM cart_items ci
-                JOIN products p ON ci.product_id = p.id
-                WHERE ci.cart_id = " . (int)$cart['id'];
-        
-        $items = $this->fetchAll($sql);
-        
-        // Calculate totals
-        $subtotal = 0;
-        foreach ($items as &$item) {
-            $subtotal += $item['item_total'];
-            
-            // Flag if price changed
-            $item['price_changed'] = ($item['price'] != $item['current_price']);
-        }
-        
-        $cart['items'] = $items;
-        $cart['subtotal'] = $subtotal;
-        $cart['item_count'] = count($items);
-        
-        return $cart;
+        return $this->getWithItems($cart['id']);
     }
 
 
-    
-    //add item to cart (VULNERABLE - no stock check, price manipulation)
-    //need some edite but good for now
-    public function addItem($userId, $productId, $quantity, $price)
-    {
-        $cart = $this->getOrCreate($userId);
-        
-        // Check if item already in cart
-        $sql = "SELECT * FROM cart_items 
-                WHERE cart_id = " . (int)$cart['id'] . " 
-                AND product_id = " . (int)$productId;
-        
-        $existingItem = $this->fetchOne($sql);
-        
-        if ($existingItem) {
-            // Update quantity (VULNERABLE - no max quantity check)
-            $newQuantity = $existingItem['quantity'] + $quantity;
-            $sql = "UPDATE cart_items 
-                    SET quantity = {$newQuantity},
-                        price = {$price},
-                        updated_at = NOW()
-                    WHERE id = " . (int)$existingItem['id'];
-            
-            $this->connection->query($sql);
-            return $existingItem['id'];
-        } else {
-            // Insert new item (VULNERABLE - accepts any price from client)
-            $sql = "INSERT INTO cart_items 
-                    (cart_id, product_id, quantity, price, created_at, updated_at)
-                    VALUES ({$cart['id']}, {$productId}, {$quantity}, {$price}, NOW(), NOW())";
-            
-            if ($this->connection->query($sql)) {
-                return $this->connection->insert_id;
-            }
-        }
-        
-        return false;
-    }
 
-
-    //udate item quantity
-    //need some edite but good till now
-    public function updateItemQuantity($cartItemId, $quantity)
-    {
-        // V1: No ownership check (IDOR vulnerability)
-        $sql = "UPDATE cart_items 
-                SET quantity = " . (int)$quantity . ",
-                    updated_at = NOW()
-                WHERE id = " . (int)$cartItemId;
-        
-        return $this->connection->query($sql);
-    }
-
-
-    //remove item from cart
-    public function removeItem($cartItemId)
-    {
-        // V1: No ownership check (anyone can delete any item)
-        $sql = "DELETE FROM cart_items WHERE id = " . (int)$cartItemId;
-        
-        return $this->connection->query($sql);
-    }
-
-    //clear entire cart
-    public function clearCart($userId)
-    {
-        $cart = $this->getOrCreate($userId);
-        
-        $sql = "DELETE FROM cart_items WHERE cart_id = " . (int)$cart['id'];
-        
-        return $this->connection->query($sql);
-    }
-
-
-    //get cart item count (for header badge)
+    //get cart items count for user
     public function getItemCount($userId)
     {
-        $cart = $this->getOrCreate($userId);
+        $cart = $this->getByUserId($userId);
         
-        $sql = "SELECT SUM(quantity) as total 
-                FROM cart_items 
-                WHERE cart_id = " . (int)$cart['id'];
+        if (!$cart) {
+            return 0;
+        }
+        
+        $cartId = $cart['id'];
+        $sql = "SELECT COUNT(*) as total FROM cart_items WHERE cart_id = '{$cartId}'";
+
         
         $result = $this->fetchOne($sql);
         
         return (int)($result['total'] ?? 0);
     }
 
+
+
     //get cart total price
     public function getTotal($userId)
     {
-        $cart = $this->getWithItems($userId);
+        $cart = $this->getByUserId($userId);
         
-        return $cart['subtotal'] ?? 0;
+        if (!$cart) {
+            return 0;
+        }
+        
+        $cartId = $cart['id'];
+        $sql = "
+            SELECT SUM(quantity * price) as total 
+            FROM cart_items 
+            WHERE cart_id = '{$cartId}'
+        ";
+        
+        $result = $this->connection->query($sql);
+        
+        if (!$result) {
+            return 0;
+        }
+        
+        $row = $result->fetch_assoc();
+        $result->free();
+        
+        return (float)($row['total'] ?? 0);
     }
 
 
-    /**
-     * Validate cart before checkout
-     * Returns: ['valid' => bool, 'errors' => []]
-     */
-    public function validateForCheckout($userId)
+
+    //clear all items from cart
+    public function clearItems($cartId)
     {
-        $cart = $this->getWithItems($userId);
+        $cartId = $this->connection->real_escape_string($cartId);
+        $sql = "DELETE FROM cart_items WHERE cart_id = '{$cartId}'";
         
-        $errors = [];
+        $result = $this->connection->query($sql);
         
-        if (empty($cart['items'])) {
-            $errors[] = 'Cart is empty';
+        if (!$result) {
+            $this->logError("ClearItems failed", $sql);
+            return false;
         }
         
-        foreach ($cart['items'] as $item) {
-            // Check stock availability
-            if ($item['quantity'] > $item['available_stock']) {
-                $errors[] = "{$item['product_name']}: Only {$item['available_stock']} items in stock";
-            }
-            
-            // Check price changes
-            if ($item['price_changed']) {
-                $errors[] = "{$item['product_name']}: Price has changed";
-            }
-        }
-        
-        return [
-            'valid' => empty($errors),
-            'errors' => $errors,
-            'cart' => $cart
-        ];
+        return true;
     }
 
 
-
-    //Convert cart to order (used in checkout)
-    public function convertToOrder($userId)
+    //delete cart and all items
+    public function deleteCart($cartId)
     {
-        $validation = $this->validateForCheckout($userId);
+        // Delete items first
+        $this->clearItems($cartId);
         
-        if (!$validation['valid']) {
-            return [
-                'success' => false,
-                'errors' => $validation['errors']
-            ];
-        }
-        
-        $cart = $validation['cart'];
-        
-        // Mark cart as converted
-        $this->update($cart['id'], ['status' => 'converted']);
-        
-        return [
-            'success' => true,
-            'cart' => $cart
-        ];
+        // Delete cart
+        return $this->delete($cartId);
     }
+    
 
+
+
+   
+
+
+    
     /**
      * Sync cart prices with current product prices
      * Useful to update old cart items
     */
     public function syncPrices($userId)
     {
-        $cart = $this->getOrCreate($userId);
+        $cart = $this->getByUserId($userId);
         
         $sql = "UPDATE cart_items ci
                 JOIN products p ON ci.product_id = p.id
@@ -258,7 +242,7 @@ class Cart extends BaseModel
 
     /**
      * Get abandoned carts (for marketing)
-     * Carts not updated in 24 hours
+     * Carts not updated in 24 hours: to add in cart to buy
     */
     public function getAbandoned($hours = 24)
     {

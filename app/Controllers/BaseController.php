@@ -385,26 +385,12 @@ class BaseController
         
         return $this->user['id'];
 
-        // $version = $this->getVersion();
-        // if ($version === 'v1') {
-        //     // V1: Get user_id from request (VULNERABLE!)
-        //     // if ($source === 'body') {
-        //     //     return $this->getInput('user_id');
-        //     // } else {
-        //     //     return $this->getQuery('user_id');
-        //     // }
-        // } else {
-        //     // V2/V3: Get user_id from authenticated token (SECURE!)
-        //     $user = $this->getUser();
-        //     return $user ? $user['id'] : null;
-        // }
+        // will make if and else to check version num to show were to return id from session or jwt tokn
     }
 
 
 
-    // Check if current user owns the resource (V2/V3 ONLY)
-    //  V1: Always returns true (no ownership checks - VULNERABLE!)
-    //  V2/V3: Compares resource owner with authenticated user (SECURE!)
+    // Check if current user owns the resource 
     protected function checkOwnership($resourceUserId, $errorMessage = 'You do not have access to this resource')
     {
         // Make sure user is authenticated first
