@@ -25,7 +25,6 @@ return [
     'v1' =>[
 
         //Authentication routes
-        //No Authentication required "level 1"
         'POST /register'   => 'v1\Authcontroller@register',
         'POST /login'      => 'v1\Authcontroller@login',
         'POST /logout'     => 'V1\AuthController@logout',
@@ -36,7 +35,7 @@ return [
         'GET /products'    => 'v1\ProductController@index',
         'GET /products/search'       => 'V1\ProductController@search',
         'GET /products/{id}' => 'V1\ProductController@show',
-        //admin routes (not important to handel for now)
+        //admin routes 
         'POST /products'             => 'V1\ProductController@create',          
         'PUT /products/{id}'         => 'V1\ProductController@update',  
         'DELETE /products/{id}'      => 'V1\ProductController@delete',  
@@ -46,7 +45,7 @@ return [
         //public access
         'GET /categories'                => 'V1\CategoryController@index',
         'GET /categories/{id}/products'  => 'v1\ProductController@categoryProducts',
-        //admin routes (not important to handel for now)
+        //admin routes 
         'POST /categories'                   => 'V1\CategoryController@create',          // Create category (future)
         'PUT /categories/{id}'               => 'V1\CategoryController@update',          // Update category (future)
         'DELETE /categories/{id}'            => 'V1\CategoryController@delete',          // Delete category (future)
@@ -56,41 +55,35 @@ return [
         //public access
         'GET /brands'                => 'V1\BrandController@index',      // List all brands
         'GET /brands/{id}/products'  => 'V1\BrandController@products',   // Products by brand
-        //admin routes (not important to handel for now)
+        //admin routes 
         'POST /brands'               => 'V1\BrandController@create',     // Create brand (future)
         'PUT /brands/{id}'           => 'V1\BrandController@update',     // Update brand (future)
         'DELETE /brands/{id}'        => 'V1\BrandController@delete',     // Delete brand (future)
         
 
         //cart routes
-        //No authentication 'vulnerable'
-        //user id any one can passed in request body or query
         'GET /cart'        => 'v1\CartController@show',
         'GET /cart/count'            => 'V1\CartController@count',       // Cart items count (for badge)
         'GET /cart/total'            => 'V1\CartController@total',       // Cart total price
-        //admin routes (not impostant to handel for now)
+        //admin routes 
         'POST /cart/add'             => 'V1\CartController@add',         // Add item to cart
         'PUT /cart/items/{id}'       => 'V1\CartController@updateItem',  // Update item quantity (VULNERABLE: IDOR)
         'DELETE /cart/items/{id}'    => 'V1\CartController@removeItem',  // Remove single item (VULNERABLE: IDOR)
         'DELETE /cart/clear'         => 'V1\CartController@clear',       // Clear entire cart
         
         //order routes
-        //No authentication 'vulnerable'
-        //anyone can access any user 's orders
         'GET /orders'     =>'v1\OrderController@index',
         'GET /orders/{id}'  =>'v1\OrderController@show',
         'GET /orders/{id}/items'     => 'V1\OrderController@items',      // Order items (VULNERABLE: IDOR)
         'GET /orders/{id}/status'    => 'V1\OrderController@status',     // Order status tracking
         'POST /checkout'             => 'V1\OrderController@checkout',   // Create order from cart (VULNERABLE: no auth)
         'PUT /orders/{id}/cancel'    => 'V1\OrderController@cancel',     // Cancel order (VULNERABLE: IDOR)
-        //admin routes (not impostant to handel for now)
+        //admin routes 
         'PUT /orders/{id}/status'    => 'V1\OrderController@updateStatus',  // Update order status (admin)
        
         
 
         //user profile routes
-        //No authentication 'culnerable'
-        //anyone can access any user 's data
         'GET /user/{id}'  =>'v1\UserController@show',
         'GET /users/{id}/orders'     => 'V1\UserController@orders',      // User's order history
         'GET /users/{id}/addresses'  => 'V1\UserController@addresses',   // Saved addresses
@@ -98,7 +91,7 @@ return [
         'PUT /users/{id}/password'   => 'V1\UserController@changePassword',  // Change password (VULNERABLE)
         'POST /users/{id}/addresses' => 'V1\UserController@addAddress',  // Add new address
         'DELETE /users/{id}'         => 'V1\UserController@delete',      // Delete account
-        //admin routes (not impostant to handel for now)
+        //admin routes 
 
 
         //reiews

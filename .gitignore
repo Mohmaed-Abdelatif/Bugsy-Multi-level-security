@@ -1,6 +1,5 @@
 # Ignore environment and sensitive files
 .env
-.env.example
 
 # Ignore logs
 /storage/logs/*

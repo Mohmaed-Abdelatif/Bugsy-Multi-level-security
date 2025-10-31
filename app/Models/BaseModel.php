@@ -268,7 +268,7 @@ class BaseModel
         $columns = array_keys($data);
         $values = array_values($data);
 
-         if ($this->connectionType === 'mysqli') {
+        if ($this->connectionType === 'mysqli') {
             // V1: MySQLi
             $escapedValues = [];
             foreach ($values as $value) {
@@ -785,21 +785,27 @@ class BaseModel
     //--------------------------
     //error handling & logging
     //--------------------------
-     protected function logError($message, $sql = '')
+    protected function logError($message, $sql = '')
     {
         $logMessage = sprintf(
             "[%s] %s - Table: %s, SQL: %s",
             get_class($this),
             $message,
             $this->table,
+            $sql
         );
-        
-        error_log($logMessage);
-        
-        // In development, also log connection-specific errors
-        if (APP_ENV === 'development') {
+
+        // Log to a specific file
+        $logPath = STORAGE . '/logs/error.log';
+        if (!file_exists(dirname($logPath))) {
+            mkdir(dirname($logPath), 0777, true);
+        }
+        error_log($logMessage . PHP_EOL, 3, $logPath);
+
+        // In development, log connection-specific errors
+        if (defined('APP_ENV') && APP_ENV === 'development') {
             if ($this->connectionType === 'mysqli' && $this->connection->error) {
-                error_log("MySQLi Error: " . $this->connection->error);
+                error_log("MySQLi Error: " . $this->connection->error . PHP_EOL, 3, __DIR__ . '/storage/logs/error.log');
             }
         }
     }
