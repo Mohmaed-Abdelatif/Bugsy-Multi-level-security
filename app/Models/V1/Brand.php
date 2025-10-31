@@ -18,9 +18,27 @@ class Brand extends BaseModel
                 FROM {$this->table} b
                 LEFT JOIN products p ON b.id = p.brand_id AND p.is_available = 1
                 GROUP BY b.id
-                ORDER BY b.name ASC";
+                ORDER BY b.name ASC
+        ";
         
         return $this->fetchAll($sql);
+    }
+
+    //get brands with product count
+    public function getWithCount($id)
+    {
+        $id = $this->connection->real_escape_string($id);
+        
+        $sql = "
+            SELECT b.*, COUNT(p.id) as product_count
+            FROM {$this->table} b
+            LEFT JOIN products p ON c.id = p.category_id AND p.is_available = 1
+            WHERE b.id = '{$id}'
+            GROUP BY b.id
+            LIMIT 1
+        ";
+        
+        return $this->fetchOne($sql);
     }
 
 
@@ -59,10 +77,39 @@ class Brand extends BaseModel
                 GROUP BY b.id
                 HAVING product_count > 0
                 ORDER BY product_count DESC
-                LIMIT {$limit}";
+                LIMIT {$limit}
+        ";
         
         return $this->fetchAll($sql);
     }
+
+
+    //check if brand name exists
+    public function nameExists($name, $excludeId = null)
+    {
+        $name = $this->connection->real_escape_string($name);
+        
+        $sql = "SELECT id FROM {$this->table} WHERE name = '{$name}'";
+        
+        if ($excludeId) {
+            $excludeId = $this->connection->real_escape_string($excludeId);
+            $sql .= " AND id != '{$excludeId}'";
+        }
+        
+        $sql .= " LIMIT 1";
+        
+        $result = $this->connection->query($sql);
+        
+        if (!$result) {
+            return false;
+        }
+        
+        $exists = $result->num_rows > 0;
+        $result->free();
+        
+        return $exists;
+    }
+
 
 
     //search brands by name
@@ -73,7 +120,8 @@ class Brand extends BaseModel
         
         $sql = "SELECT * FROM {$this->table}
                 WHERE name LIKE '%{$keyword}%'
-                ORDER BY name ASC";
+                ORDER BY name ASC
+        ";
         
         return $this->fetchAll($sql);
     }

@@ -16,11 +16,31 @@ class Category extends BaseModel
         $sql = "SELECT c.*, COUNT(p.id) as product_count
                 FROM {$this->table} c
                 LEFT JOIN products p ON c.id = p.category_id AND p.is_available = 1
-                GROUP BY c.id
-                ORDER BY c.name ASC";
+                GROUP BY c.id, c.name, c.description, c.created_at
+                ORDER BY c.name ASC
+        ";
         
         return $this->fetchAll($sql);
     }
+
+
+    //get category with product count
+    public function getWithCount($id)
+    {
+        $id = $this->connection->real_escape_string($id);
+        
+        $sql = "
+            SELECT c.*, COUNT(p.id) as product_count
+            FROM {$this->table} c
+            LEFT JOIN products p ON c.id = p.category_id AND p.is_available = 1
+            WHERE c.id = '{$id}'
+            GROUP BY c.id, c.name, c.description, c.created_at
+            LIMIT 1
+        ";
+        
+        return $this->fetchOne($sql);
+    }
+
 
     //get category with its products
     public function getWithProducts($categoryId, $limit = 20, $offset = 0)
@@ -55,13 +75,42 @@ class Category extends BaseModel
         $sql = "SELECT c.*, COUNT(p.id) as product_count
                 FROM {$this->table} c
                 LEFT JOIN products p ON c.id = p.category_id AND p.is_available = 1
-                GROUP BY c.id
+                GROUP BY c.id, c.name, c.description, c.created_at
                 HAVING product_count > 0
                 ORDER BY product_count DESC
-                LIMIT {$limit}";
+                LIMIT {$limit}
+        ";
         
         return $this->fetchAll($sql);
     }
+    
+
+    //check if category name exists
+    public function nameExists($name, $excludeId = null)
+    {
+        $name = $this->connection->real_escape_string($name);
+        
+        $sql = "SELECT id FROM {$this->table} WHERE name = '{$name}'";
+        
+        if ($excludeId) {
+            $excludeId = $this->connection->real_escape_string($excludeId);
+            $sql .= " AND id != '{$excludeId}'";
+        }
+        
+        $sql .= " LIMIT 1";
+        
+        $result = $this->connection->query($sql);
+        
+        if (!$result) {
+            return false;
+        }
+        
+        $exists = $result->num_rows > 0;
+        $result->free();
+        
+        return $exists;
+    }
+
 
 
     //search categories by name
