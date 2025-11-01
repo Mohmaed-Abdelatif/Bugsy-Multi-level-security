@@ -1,14 +1,3 @@
--- ============================================
--- E-COMMERCE DATABASE SCHEMA
--- For Phones, Tablets, and Electronics Store
--- WITH ROLE-BASED ACCESS CONTROL (RBAC)
--- ============================================
--- ============================================
--- E-COMMERCE DATABASE SCHEMA (UPDATED)
--- For Phones, Tablets, and Electronics Store
--- WITH ROLE-BASED ACCESS CONTROL (RBAC)
--- ============================================
-
 -- Create database
 CREATE DATABASE IF NOT EXISTS ecommerce_security CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -40,6 +29,7 @@ CREATE TABLE brands (
     name VARCHAR(100) NOT NULL UNIQUE,
     logo VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_name (name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -50,7 +40,9 @@ CREATE TABLE categories (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL UNIQUE,
     description TEXT,
+    cat_image VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_name (name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -156,6 +148,7 @@ CREATE TABLE order_items (
     price DECIMAL(10,2) NOT NULL,
     subtotal DECIMAL(10,2) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
     INDEX idx_order (order_id),

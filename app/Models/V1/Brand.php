@@ -32,7 +32,7 @@ class Brand extends BaseModel
         $sql = "
             SELECT b.*, COUNT(p.id) as product_count
             FROM {$this->table} b
-            LEFT JOIN products p ON c.id = p.category_id AND p.is_available = 1
+            LEFT JOIN products p ON b.id = p.category_id AND p.is_available = 1
             WHERE b.id = '{$id}'
             GROUP BY b.id
             LIMIT 1

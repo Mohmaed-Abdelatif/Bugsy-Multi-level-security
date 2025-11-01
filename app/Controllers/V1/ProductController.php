@@ -4,6 +4,8 @@ namespace Controllers\v1;
 
 use Controllers\BaseController;
 use Models\v1\Product;
+use Helpers\ImageUpload;
+
 
 class ProductController extends BaseController
 {
@@ -264,11 +266,64 @@ class ProductController extends BaseController
     //V3: Requires admin role (strong auth)+ 2FA
 
     //create new product (admin only) : post /api/v1/products
+    /*
+     * Form Data (multipart/form-data):
+     * - name: string
+     * - description: string
+     * - price: number
+     * - stock: number
+     * - category_id: number
+     * - brand_id: number
+     * - main_image: file (image file)
+     * - additional_images[]: file[] (multiple images, optional)
+     * 
+     * OR JSON with base64:
+     * {
+     *     "name": "Product name",
+     *     "price": 999,
+     *     "main_image_base64": "data:image/jpeg;base64,/9j/4AAQ..."
+     * }
+    */
     public function create()
     {
         $this->requireAdmin();
-        // Get input data
-        $data = $this->getAllInput();
+        
+        //determine if request is multipart (file upload) or from json (base64)
+        $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+        $isMultipart = strpos($contentType, 'multipart/form-data') !== false;
+
+        if ($isMultipart) {
+            // Handle multipart form data
+            $data = $_POST; // Form fields
+            
+            // Handle main image upload
+            if (isset($_FILES['main_image']) && $_FILES['main_image']['error'] !== UPLOAD_ERR_NO_FILE) {
+                $uploadResult = ImageUpload::upload($_FILES['main_image']);
+                
+                if ($uploadResult['success']) {
+                    $data['main_image'] = $uploadResult['filename'];
+                } else {
+                    return $this->error($uploadResult['error'], 400);
+                }
+            }
+        } else {
+            // Handle JSON data
+            $data = $this->getAllInput();
+            
+            // Handle base64 image if present
+            if (isset($data['main_image_base64'])) {
+                $uploadResult = ImageUpload::uploadBase64($data['main_image_base64']);
+                
+                if ($uploadResult['success']) {
+                    $data['main_image'] = $uploadResult['filename'];
+                } else {
+                    return $this->error($uploadResult['error'], 400);
+                }
+                
+                unset($data['main_image_base64']);
+            }
+        }
+
         
         // Basic validation (weak in V1)
         $required = ['name', 'price', 'stock', 'category_id', 'brand_id'];
@@ -278,7 +333,7 @@ class ProductController extends BaseController
             }
         }
         
-        // Validate data types (V1: basic, V2: robust)
+        // Validate data types
         if (!is_numeric($data['price']) || $data['price'] <= 0) {
             return $this->error('Invalid price', 400);
         }
@@ -300,11 +355,24 @@ class ProductController extends BaseController
         $productId = $this->productModel->create($data);
         
         if (!$productId) {
-            return $this->error('Failed to create product', 500);
+            if (isset($data['main_image'])) {
+                ImageUpload::delete($data['main_image']);
+            }
+            return $this->error('Failed to create product', 500);// If product creation failed, delete uploaded image
+        }
+
+        //handle additional images (if uploaded)
+        if ($isMultipart && isset($_FILES['additional_images'])) {
+            $this->uploadAdditionalImages($productId, $_FILES['additional_images']);
         }
         
         // Get created product
         $product = $this->productModel->getWithNames($productId);
+
+        // Add full image URL
+        if ($product && $product['main_image']) {
+            $product['main_image_url'] = ImageUpload::getUrl($product['main_image']);
+        }
         
         // Log action (V2/V3 will use audit_logs table)
         $this->log('product_created', ['product_id' => $productId]);
@@ -318,53 +386,103 @@ class ProductController extends BaseController
 
 
     //update product (admin only) : put /api/v1/products/{id}
+    // For image upload with PUT, use POST with _method=PUT
     public function update($id)
     {
         $this->requireAdmin();
+
         // Validate ID
         if (!$id || !is_numeric($id)) {
             return $this->error('Invalid product ID', 400);
         }
+
+        // Get existing product
+        $existingProduct = $this->productModel->find($id);
         
-        // Check if product exists
-        if (!$this->productModel->exists($id)) {
+        if (!$existingProduct) {
             return $this->error('Product not found', 404);
         }
-        
-        // Get update data
-        $data = $this->getAllInput();
-        
+
+        // Determine content type
+        $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+        $isMultipart = strpos($contentType, 'multipart/form-data') !== false;
+
+        if ($isMultipart) {
+            $data = $_POST;
+            
+            // Handle new main image
+            if (isset($_FILES['main_image']) && $_FILES['main_image']['error'] !== UPLOAD_ERR_NO_FILE) {
+                $uploadResult = ImageUpload::upload($_FILES['main_image']);
+                
+                if ($uploadResult['success']) {
+                    // Delete old image
+                    if ($existingProduct['main_image']) {
+                        ImageUpload::delete($existingProduct['main_image']);
+                    }
+                    
+                    $data['main_image'] = $uploadResult['filename'];
+                } else {
+                    return $this->error($uploadResult['error'], 400);
+                }
+            }
+        } else {
+            $data = $this->getAllInput();
+            
+            // Handle base64 image
+            if (isset($data['main_image_base64'])) {
+                $uploadResult = ImageUpload::uploadBase64($data['main_image_base64']);
+                
+                if ($uploadResult['success']) {
+                    // Delete old image
+                    if ($existingProduct['main_image']) {
+                        ImageUpload::delete($existingProduct['main_image']);
+                    }
+                    
+                    $data['main_image'] = $uploadResult['filename'];
+                } else {
+                    return $this->error($uploadResult['error'], 400);
+                }
+                
+                unset($data['main_image_base64']);
+            }
+        }
+
         if (empty($data)) {
             return $this->error('No data provided', 400);
         }
-        
-        // Validate numeric fields if present
+
+        // Validate numeric fields
         if (isset($data['price']) && (!is_numeric($data['price']) || $data['price'] <= 0)) {
             return $this->error('Invalid price', 400);
         }
-        
+
         if (isset($data['stock']) && (!is_numeric($data['stock']) || $data['stock'] < 0)) {
             return $this->error('Invalid stock quantity', 400);
         }
-        
+
         // Update product
         $success = $this->productModel->update($id, $data);
-        
+
         if (!$success) {
             return $this->error('Failed to update product', 500);
         }
-        
+
         // Get updated product
         $product = $this->productModel->getWithNames($id);
         
+        // Add full image URL
+        if ($product && $product['main_image']) {
+            $product['main_image_url'] = ImageUpload::getUrl($product['main_image']);
+        }
+
         // Log action
         $this->log('product_updated', ['product_id' => $id]);
-        
-        // Return success
+
         return $this->json([
             'message' => 'Product updated successfully',
             'product' => $product
         ]);
+
     }
 
 
@@ -382,6 +500,11 @@ class ProductController extends BaseController
         
         if (!$product) {
             return $this->error('Product not found', 404);
+        }
+
+        // Delete main image
+        if ($product['main_image']) {
+            ImageUpload::delete($product['main_image']);
         }
         
         // Delete product
@@ -401,6 +524,42 @@ class ProductController extends BaseController
         return $this->json([
             'message' => 'Product deleted successfully'
         ]);
+    }
+
+
+    //uplad additional images for product
+    //post /api/v1/products/{id}/images
+    public function uploadAdditionalImages($productId, $files = null)
+    {
+        // If called from create/update, files are passed directly
+        // If called as endpoint, get from $_FILES
+        if ($files === null) {
+            $this->requireAdmin();
+            
+            if (!isset($_FILES['images'])) {
+                return $this->error('No images provided', 400);
+            }
+            
+            $files = $_FILES['images'];
+        }
+
+        $uploadResult = ImageUpload::uploadMultiple($files, 5);
+
+        if (!$uploadResult['success']) {
+            return $this->error('Failed to upload images: ' . implode(', ', $uploadResult['errors']), 400);
+        }
+
+        // If called as endpoint (not from create/update)
+        if (func_num_args() === 1) {
+            return $this->json([
+                'message' => 'Images uploaded successfully',
+                'images' => array_map(function($img) {
+                    return ImageUpload::getUrl($img);
+                }, $uploadResult['files'])
+            ]);
+        }
+
+        return $uploadResult['files'];
     }
 
     
