@@ -37,9 +37,19 @@ return [
         'GET /products/{id}' => 'V1\ProductController@show',
         //admin routes 
         'POST /products'             => 'V1\ProductController@create',          
-        'PUT /products/{id}'         => 'V1\ProductController@update',  
+        'POST /products/{id}'         => 'V1\ProductController@update',  //use POST in update coz with method PUT it alwase return empty for multipart
         'DELETE /products/{id}'      => 'V1\ProductController@delete',  
         
+        // Reviews
+        'GET /products/{id}/reviews'     => 'V1\ReviewController@index',      // Product reviews
+        'GET /products/{id}/rating'      => 'V1\ReviewController@rating',     // Average rating
+        'GET /reviews/{id}'              => 'V1\ReviewController@show',       // Single review
+        'POST /products/{id}/reviews'    => 'V1\ReviewController@create',     // Add review
+        'PUT /reviews/{id}'              => 'V1\ReviewController@update',     // Edit review
+        'DELETE /reviews/{id}'           => 'V1\ReviewController@delete',     // Delete review
+        'POST /reviews/{id}/helpful'     => 'V1\ReviewController@markHelpful', // Mark helpful
+        'GET /users/{id}/reviews'        => 'V1\ReviewController@userReviews', // User's reviews
+
 
         //category routes
         //public access
@@ -47,7 +57,7 @@ return [
         'GET /categories/{id}/products'  => 'v1\ProductController@categoryProducts',
         //admin routes 
         'POST /categories'                   => 'V1\CategoryController@create',          // Create category (future)
-        'PUT /categories/{id}'               => 'V1\CategoryController@update',          // Update category (future)
+        'POST /categories/{id}'               => 'V1\CategoryController@update',          // Update category (future)   //use POST in update coz with method PUT it alwase return empty for multipart
         'DELETE /categories/{id}'            => 'V1\CategoryController@delete',          // Delete category (future)
         
 
@@ -57,7 +67,7 @@ return [
         'GET /brands/{id}/products'  => 'V1\BrandController@products',   // Products by brand
         //admin routes 
         'POST /brands'               => 'V1\BrandController@create',     // Create brand (future)
-        'PUT /brands/{id}'           => 'V1\BrandController@update',     // Update brand (future)
+        'POST /brands/{id}'           => 'V1\BrandController@update',     // Update brand (future)   //use POST in update coz with method PUT it alwase return empty for multipart
         'DELETE /brands/{id}'        => 'V1\BrandController@delete',     // Delete brand (future)
         
 

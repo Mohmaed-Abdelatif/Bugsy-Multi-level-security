@@ -177,90 +177,121 @@ class CategoryController extends BaseController
 
 
     //update category(for admin): put /api/v1/categories/{id}
-        public function update($id)
+    /*
+     * For file uploads, use: POST with _method=PUT
+     * URL: /api/v1/categories/3
+     * Body: form-data
+     *   - _method: PUT
+     *   - name: Updated Category
+     *   - description: New description
+     *   - cat_image: [file]
+    */
+    public function update($id)
     {
-        
+        // Require admin
         $this->requireAdmin();
-        
+
         // Validate ID
         if (!$id || !is_numeric($id)) {
             return $this->error('Invalid category ID', 400);
         }
-        
+
         // Get existing category
-        $existingcategory = $this->categoryModel->find($id);
-        
-        if (!$existingcategory) {
-            return $this->error('category not found', 404);
+        $existingCategory = $this->categoryModel->find($id);
+
+        if (!$existingCategory) {
+            return $this->error('Category not found', 404);
         }
 
-
-        // Determine content type
+        // Determine content type and check method override
         $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
         $isMultipart = strpos($contentType, 'multipart/form-data') !== false;
 
-        if ($isMultipart) {
-            $data = $_POST;
-            
-            // Handle new main image
-            if (isset($_FILES['cat_image']) && $_FILES['cat_image']['error'] !== UPLOAD_ERR_NO_FILE) {
-                $uploadResult = ImageUpload::upload($_FILES['cat_image']);
-                
-                if ($uploadResult['success']) {
-                    // Delete old image
-                    if ($existingcategory['cat_image']) {
-                        ImageUpload::delete($existingcategory['cat_image']);
-                    }
-                    
-                    $data['cat_image'] = $uploadResult['filename'];
-                } else {
-                    return $this->error($uploadResult['error'], 400);
-                }
+        // Check for method override (POST with _method=PUT)
+        $actualMethod = $this->getMethod();
+        if ($actualMethod === 'POST') {
+            $methodOverride = $this->getInput('_method') ?: $this->getQuery('_method');
+            if (strtoupper($methodOverride) === 'PUT') {
+                $actualMethod = 'PUT';
             }
+        }
+
+        $data = [];
+
+        if ($isMultipart) {
+            // Handle multipart form data (works for POST)
+            // For PUT with files, client must use POST with _method=PUT
+
+            if ($actualMethod === 'POST' || !empty($_POST)) {
+                $data = $_POST;
+
+                // Remove _method field from data
+                unset($data['_method']);
+
+                // Handle new category image upload
+                if (isset($_FILES['cat_image']) && $_FILES['cat_image']['error'] !== UPLOAD_ERR_NO_FILE) {
+                    $uploadResult = ImageUpload::upload($_FILES['cat_image']);
+
+                    if ($uploadResult['success']) {
+                        // Delete old image
+                        if ($existingCategory['cat_image']) {
+                            ImageUpload::delete($existingCategory['cat_image']);
+                        }
+
+                        $data['cat_image'] = $uploadResult['filename'];
+                    } else {
+                        return $this->error($uploadResult['error'], 400);
+                    }
+                }
+            } else {
+                // Multipart PUT without POST override - not supported
+                return $this->error(
+                    'For file uploads with PUT, use POST with _method=PUT parameter', 
+                    400,
+                    ['hint' => 'Add _method=PUT to form data or query string']
+                );
+            }
+
         } else {
+            // Handle JSON data (regular PUT)
             $data = $this->getAllInput();
-            
+
             // Handle base64 image
             if (isset($data['cat_image_base64'])) {
                 $uploadResult = ImageUpload::uploadBase64($data['cat_image_base64']);
-                
+
                 if ($uploadResult['success']) {
                     // Delete old image
-                    if ($existingcategory['cat_image']) {
-                        ImageUpload::delete($existingcategory['cat_image']);
+                    if ($existingCategory['cat_image']) {
+                        ImageUpload::delete($existingCategory['cat_image']);
                     }
-                    
+
                     $data['cat_image'] = $uploadResult['filename'];
                 } else {
                     return $this->error($uploadResult['error'], 400);
                 }
-                
+
                 unset($data['cat_image_base64']);
             }
         }
 
+        // Check if we have data to update
         if (empty($data)) {
             return $this->error('No data provided', 400);
         }
-        
-        // Check if exists
-        if (!$this->categoryModel->exists($id)) {
-            return $this->error('Category not found', 404);
-        }
-        
-        
-        // If name is being updated, check if it exists
+
+        // If name is being updated, check if it already exists
         if (isset($data['name']) && $this->categoryModel->nameExists($data['name'], $id)) {
             return $this->error('Category name already exists', 409);
         }
-        
-        // Update
+
+        // Update category
         $success = $this->categoryModel->update($id, $data);
-        
+
         if (!$success) {
             return $this->error('Failed to update category', 500);
         }
-        
+
         // Get updated category
         $category = $this->categoryModel->find($id);
 
@@ -271,12 +302,13 @@ class CategoryController extends BaseController
 
         // Log action
         $this->log('category_updated', ['category_id' => $id]);
-        
+
         return $this->json([
             'message' => 'Category updated successfully',
             'category' => $category
         ]);
     }
+
 
 
     //delete category: delete /api/v1/categories/{id}

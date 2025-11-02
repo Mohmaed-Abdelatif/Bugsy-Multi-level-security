@@ -73,6 +73,54 @@ CREATE TABLE products (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================
+-- REVIEWS & RATINGS TABLE
+-- ============================================
+
+CREATE TABLE reviews (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    product_id INT NOT NULL,
+    user_id INT NOT NULL,
+    rating DECIMAL(2,1) NOT NULL CHECK (rating >= 1.0 AND rating <= 5.0),
+    title VARCHAR(255),
+    comment TEXT,
+    is_verified_purchase BOOLEAN DEFAULT FALSE, -- Did user actually buy this product?
+    helpful_count INT DEFAULT 0, -- How many found this review helpful
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    
+    -- One review per user per product
+    UNIQUE KEY unique_user_product (user_id, product_id),
+    
+    INDEX idx_product (product_id),
+    INDEX idx_user (user_id),
+    INDEX idx_rating (rating),
+    INDEX idx_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================
+-- REVIEW HELPFULNESS TABLE (Optional - for "Was this helpful?" feature)
+-- ============================================
+CREATE TABLE review_helpfulness (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    review_id INT NOT NULL,
+    user_id INT NOT NULL,
+    is_helpful BOOLEAN NOT NULL, -- TRUE = helpful, FALSE = not helpful
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (review_id) REFERENCES reviews(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    
+    -- One vote per user per review
+    UNIQUE KEY unique_user_review (user_id, review_id),
+    
+    INDEX idx_review (review_id),
+    INDEX idx_user (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================
 -- 5. PRODUCT_IMAGES TABLE
 -- ============================================
 CREATE TABLE product_images (

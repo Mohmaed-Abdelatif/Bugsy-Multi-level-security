@@ -387,28 +387,55 @@ class ProductController extends BaseController
 
     //update product (admin only) : put /api/v1/products/{id}
     // For image upload with PUT, use POST with _method=PUT
+    /*
+     URL: /api/v1/products/5?_method=PUT
+     - Body: form-data
+       - _method: PUT
+       - name: Updated Product Name
+       - price: 999
+       - main_image: [file]
+     
+    */
     public function update($id)
-    {
-        $this->requireAdmin();
+{
+    $this->requireAdmin();
 
-        // Validate ID
-        if (!$id || !is_numeric($id)) {
-            return $this->error('Invalid product ID', 400);
+    // Validate ID
+    if (!$id || !is_numeric($id)) {
+        return $this->error('Invalid product ID', 400);
+    }
+
+    // Get existing product
+    $existingProduct = $this->productModel->find($id);
+    
+    if (!$existingProduct) {
+        return $this->error('Product not found', 404);
+    }
+
+    // Determine content type and request method
+    $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+    $isMultipart = strpos($contentType, 'multipart/form-data') !== false;
+    
+    // Check for method override (POST with _method=PUT)
+    $actualMethod = $this->getMethod();
+    if ($actualMethod === 'POST') {
+        $methodOverride = $this->getInput('_method') ?: $this->getQuery('_method');
+        if (strtoupper($methodOverride) === 'PUT') {
+            $actualMethod = 'PUT';
         }
+    }
 
-        // Get existing product
-        $existingProduct = $this->productModel->find($id);
+    $data = [];
+
+    if ($isMultipart) {
+        // Handle multipart form data (works for POST)
+        // For PUT with files, client must use POST with _method=PUT
         
-        if (!$existingProduct) {
-            return $this->error('Product not found', 404);
-        }
-
-        // Determine content type
-        $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
-        $isMultipart = strpos($contentType, 'multipart/form-data') !== false;
-
-        if ($isMultipart) {
+        if ($actualMethod === 'POST' || !empty($_POST)) {
             $data = $_POST;
+            
+            // Remove _method field from data
+            unset($data['_method']);
             
             // Handle new main image
             if (isset($_FILES['main_image']) && $_FILES['main_image']['error'] !== UPLOAD_ERR_NO_FILE) {
@@ -425,65 +452,81 @@ class ProductController extends BaseController
                     return $this->error($uploadResult['error'], 400);
                 }
             }
-        } else {
-            $data = $this->getAllInput();
             
-            // Handle base64 image
-            if (isset($data['main_image_base64'])) {
-                $uploadResult = ImageUpload::uploadBase64($data['main_image_base64']);
-                
-                if ($uploadResult['success']) {
-                    // Delete old image
-                    if ($existingProduct['main_image']) {
-                        ImageUpload::delete($existingProduct['main_image']);
-                    }
-                    
-                    $data['main_image'] = $uploadResult['filename'];
-                } else {
-                    return $this->error($uploadResult['error'], 400);
+            // Handle additional images
+            if (isset($_FILES['additional_images'])) {
+                $this->uploadAdditionalImages($id, $_FILES['additional_images']);
+            }
+        } else {
+            // Multipart PUT without POST override - not supported
+            return $this->error(
+                'For file uploads with PUT, use POST with _method=PUT parameter', 
+                400,
+                ['hint' => 'Add _method=PUT to form data or query string']
+            );
+        }
+        
+    } else {
+        // Handle JSON data (regular PUT)
+        $data = $this->getAllInput();
+        
+        // Handle base64 image
+        if (isset($data['main_image_base64'])) {
+            $uploadResult = ImageUpload::uploadBase64($data['main_image_base64']);
+            
+            if ($uploadResult['success']) {
+                // Delete old image
+                if ($existingProduct['main_image']) {
+                    ImageUpload::delete($existingProduct['main_image']);
                 }
                 
-                unset($data['main_image_base64']);
+                $data['main_image'] = $uploadResult['filename'];
+            } else {
+                return $this->error($uploadResult['error'], 400);
             }
+            
+            unset($data['main_image_base64']);
         }
-
-        if (empty($data)) {
-            return $this->error('No data provided', 400);
-        }
-
-        // Validate numeric fields
-        if (isset($data['price']) && (!is_numeric($data['price']) || $data['price'] <= 0)) {
-            return $this->error('Invalid price', 400);
-        }
-
-        if (isset($data['stock']) && (!is_numeric($data['stock']) || $data['stock'] < 0)) {
-            return $this->error('Invalid stock quantity', 400);
-        }
-
-        // Update product
-        $success = $this->productModel->update($id, $data);
-
-        if (!$success) {
-            return $this->error('Failed to update product', 500);
-        }
-
-        // Get updated product
-        $product = $this->productModel->getWithNames($id);
-        
-        // Add full image URL
-        if ($product && $product['main_image']) {
-            $product['main_image_url'] = ImageUpload::getUrl($product['main_image']);
-        }
-
-        // Log action
-        $this->log('product_updated', ['product_id' => $id]);
-
-        return $this->json([
-            'message' => 'Product updated successfully',
-            'product' => $product
-        ]);
-
     }
+
+    // Check if we have data to update
+    if (empty($data)) {
+        return $this->error('No data provided', 400);
+    }
+
+    // Validate numeric fields if provided
+    if (isset($data['price']) && (!is_numeric($data['price']) || $data['price'] <= 0)) {
+        return $this->error('Invalid price', 400);
+    }
+
+    if (isset($data['stock']) && (!is_numeric($data['stock']) || $data['stock'] < 0)) {
+        return $this->error('Invalid stock quantity', 400);
+    }
+
+    // Update product
+    $success = $this->productModel->update($id, $data);
+
+    if (!$success) {
+        return $this->error('Failed to update product', 500);
+    }
+
+    // Get updated product
+    $product = $this->productModel->getWithNames($id);
+    
+    // Add full image URL
+    if ($product && $product['main_image']) {
+        $product['main_image_url'] = ImageUpload::getUrl($product['main_image']);
+    }
+
+    // Log action
+    $this->log('product_updated', ['product_id' => $id]);
+
+    return $this->json([
+        'message' => 'Product updated successfully',
+        'product' => $product
+    ]);
+}
+
 
 
     //delete product (admin only) : delete /api/v1/products/{id}

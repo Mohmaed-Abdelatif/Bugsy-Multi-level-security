@@ -163,85 +163,121 @@ class BrandController extends BaseController
 
 
     //update brand (for admin): put /api/v1/brands/{id}
+        
+    /*
+     * For file uploads, use: POST with _method=PUT
+     * URL: /api/v1/brands/5
+     * Body: form-data
+     *   - _method: PUT
+     *   - name: Updated Brand
+     *   - logo: [file]
+    */
     public function update($id)
     {
         // Require admin
         $this->requireAdmin();
-        
+
         // Validate ID
         if (!$id || !is_numeric($id)) {
             return $this->error('Invalid brand ID', 400);
         }
-        
+
         // Get existing brand
-        $existingbrand = $this->brandModel->find($id);
-        
-        if (!$existingbrand) {
-            return $this->error('brand not found', 404);
+        $existingBrand = $this->brandModel->find($id);
+
+        if (!$existingBrand) {
+            return $this->error('Brand not found', 404);
         }
 
-
-        // Determine content type
+        // Determine content type and check method override
         $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
         $isMultipart = strpos($contentType, 'multipart/form-data') !== false;
 
-        if ($isMultipart) {
-            $data = $_POST;
-            
-            // Handle new main image
-            if (isset($_FILES['logo']) && $_FILES['logo']['error'] !== UPLOAD_ERR_NO_FILE) {
-                $uploadResult = ImageUpload::upload($_FILES['logo']);
-                
-                if ($uploadResult['success']) {
-                    // Delete old image
-                    if ($existingbrand['logo']) {
-                        ImageUpload::delete($existingbrand['logo']);
-                    }
-                    
-                    $data['logo'] = $uploadResult['filename'];
-                } else {
-                    return $this->error($uploadResult['error'], 400);
-                }
+        // Check for method override (POST with _method=PUT)
+        $actualMethod = $this->getMethod();
+        if ($actualMethod === 'POST') {
+            $methodOverride = $this->getInput('_method') ?: $this->getQuery('_method');
+            if (strtoupper($methodOverride) === 'PUT') {
+                $actualMethod = 'PUT';
             }
+        }
+
+        $data = [];
+
+        if ($isMultipart) {
+            // Handle multipart form data (works for POST)
+            // For PUT with files, client must use POST with _method=PUT
+
+            if ($actualMethod === 'POST' || !empty($_POST)) {
+                $data = $_POST;
+
+                // Remove _method field from data
+                unset($data['_method']);
+
+                // Handle new logo upload
+                if (isset($_FILES['logo']) && $_FILES['logo']['error'] !== UPLOAD_ERR_NO_FILE) {
+                    $uploadResult = ImageUpload::upload($_FILES['logo']);
+
+                    if ($uploadResult['success']) {
+                        // Delete old logo
+                        if ($existingBrand['logo']) {
+                            ImageUpload::delete($existingBrand['logo']);
+                        }
+
+                        $data['logo'] = $uploadResult['filename'];
+                    } else {
+                        return $this->error($uploadResult['error'], 400);
+                    }
+                }
+            } else {
+                // Multipart PUT without POST override - not supported
+                return $this->error(
+                    'For file uploads with PUT, use POST with _method=PUT parameter', 
+                    400,
+                    ['hint' => 'Add _method=PUT to form data or query string']
+                );
+            }
+
         } else {
+            // Handle JSON data (regular PUT)
             $data = $this->getAllInput();
-            
+
             // Handle base64 image
             if (isset($data['logo_base64'])) {
                 $uploadResult = ImageUpload::uploadBase64($data['logo_base64']);
-                
+
                 if ($uploadResult['success']) {
-                    // Delete old image
-                    if ($existingbrand['logo']) {
-                        ImageUpload::delete($existingbrand['logo']);
+                    // Delete old logo
+                    if ($existingBrand['logo']) {
+                        ImageUpload::delete($existingBrand['logo']);
                     }
-                    
+
                     $data['logo'] = $uploadResult['filename'];
                 } else {
                     return $this->error($uploadResult['error'], 400);
                 }
-                
+
                 unset($data['logo_base64']);
             }
         }
 
-
+        // Check if we have data to update
         if (empty($data)) {
             return $this->error('No data provided', 400);
-        } 
+        }
 
-        // If name is being updated, check if it exists
+        // If name is being updated, check if it already exists
         if (isset($data['name']) && $this->brandModel->nameExists($data['name'], $id)) {
             return $this->error('Brand name already exists', 409);
         }
-        
-        // Update
+
+        // Update brand
         $success = $this->brandModel->update($id, $data);
-        
+
         if (!$success) {
             return $this->error('Failed to update brand', 500);
         }
-        
+
         // Get updated brand
         $brand = $this->brandModel->find($id);
 
@@ -249,15 +285,16 @@ class BrandController extends BaseController
         if ($brand && $brand['logo']) {
             $brand['logo_url'] = ImageUpload::getUrl($brand['logo']);
         }
-        
+
         // Log action
         $this->log('brand_updated', ['brand_id' => $id]);
-        
+
         return $this->json([
             'message' => 'Brand updated successfully',
             'brand' => $brand
         ]);
     }
+
 
 
     //delete brand (for admin): delete /api/v1/brands/{id}
