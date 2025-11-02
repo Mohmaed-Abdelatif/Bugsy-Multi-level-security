@@ -4,8 +4,7 @@
 # Ignore logs
 /storage/logs/*
 
-# Ignore uploaded files
-/public/uploads/*
+
 
 # Ignore system files
 .DS_Store
