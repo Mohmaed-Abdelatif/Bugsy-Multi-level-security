@@ -193,4 +193,58 @@ class Product extends BaseModel
                     ->findAll();
     }
 
+    //add image to product_images table
+    public function addImage($productId, $imageUrl)
+    {
+        $data = [
+            'product_id' => $productId,
+            'image_url' => $imageUrl
+        ];
+
+        
+            $sql = "INSERT INTO product_images (product_id, image_url) VALUES ({$productId}, '{$imageUrl}')";
+            $result = $this->connection->query($sql);
+
+            if (!$result) {
+                error_log("Failed to insert product image: " . $this->connection->error);
+                return false;
+            }
+
+            return $this->connection->insert_id;
+
+        
+    }
+
+    //get all images for a product
+    public function getImages($productId)
+    {
+        $sql = "SELECT * FROM product_images WHERE product_id = {$productId} ORDER BY created_at ASC";
+        return $this->fetchAll($sql);
+    }
+
+    //DELETE IMAGE FROM PRODUCT)IMAGES TABLE
+    public function deleteImage($imageId)
+    {
+        if ($this->connectionType === 'mysqli') {
+            $sql = "DELETE FROM product_images WHERE id = {$imageId}";
+            return $this->connection->query($sql);
+        } else {
+            $sql = "DELETE FROM product_images WHERE id = :id";
+            try {
+                $stmt = $this->connection->prepare($sql);
+                return $stmt->execute(['id' => $imageId]);
+            } catch (\PDOException $e) {
+                error_log("Failed to delete product image: " . $e->getMessage());
+                return false;
+            }
+        }
+    }
+
+    //get single image by id
+    public function getImageById($imageId)
+    {
+        $sql = "SELECT * FROM product_images WHERE id = {$imageId} LIMIT 1";
+        return $this->fetchOne($sql);
+    }
+
 }

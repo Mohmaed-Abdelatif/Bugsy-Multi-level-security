@@ -88,40 +88,101 @@ class ImageUpload
         $uploaded = [];
         $errors = [];
 
-        // Normalize $_FILES array structure
-        $fileCount = count($files['name']);
-
-        if ($fileCount > $maxImages) {
+         
+        // Check if files array is empty
+        if (empty($files)) {
             return [
                 'success' => false,
-                'error' => "Maximum {$maxImages} images allowed"
+                'files' => [],
+                'errors' => ['No files provided']
             ];
         }
 
-        for ($i = 0; $i < $fileCount; $i++) {
-            $file = [
-                'name' => $files['name'][$i],
-                'type' => $files['type'][$i],
-                'tmp_name' => $files['tmp_name'][$i],
-                'error' => $files['error'][$i],
-                'size' => $files['size'][$i]
-            ];
+        // Detect file array structure
+        $isStandardStructure = isset($files['name']) && is_array($files['name']);
 
-            $result = self::upload($file);
+        if ($isStandardStructure) {
+            // Standard PHP $_FILES structure
+            // $_FILES['images'] = ['name' => [...], 'type' => [...], ...]
 
-            if ($result['success']) {
-                $uploaded[] = $result['filename'];
-            } else {
-                $errors[] = $result['error'];
+            $fileCount = count($files['name']);
+
+            if ($fileCount > $maxImages) {
+                return [
+                    'success' => false,
+                    'files' => [],
+                    'errors' => ["Maximum {$maxImages} images allowed, got {$fileCount}"]
+                ];
+            }
+
+            for ($i = 0; $i < $fileCount; $i++) {
+                // Skip if no file uploaded at this index
+                if ($files['error'][$i] === UPLOAD_ERR_NO_FILE) {
+                    continue;
+                }
+
+                $file = [
+                    'name' => $files['name'][$i],
+                    'type' => $files['type'][$i],
+                    'tmp_name' => $files['tmp_name'][$i],
+                    'error' => $files['error'][$i],
+                    'size' => $files['size'][$i]
+                ];
+
+                $result = self::upload($file);
+
+                if ($result['success']) {
+                    $uploaded[] = $result['filename'];
+                } else {
+                    $errors[] = $result['error'];
+                }
+            }
+        }else {
+            // Already normalized structure (array of file arrays)
+            // [['name' => 'img1.jpg', ...], ['name' => 'img2.jpg', ...]]
+            
+            $fileCount = count($files);
+            
+            if ($fileCount > $maxImages) {
+                return [
+                    'success' => false,
+                    'files' => [],
+                    'errors' => ["Maximum {$maxImages} images allowed, got {$fileCount}"]
+                ];
+            }
+
+            // Process each file
+            foreach ($files as $index => $file) {
+                // Skip if not a valid file array
+                if (!is_array($file) || !isset($file['name'])) {
+                    $errors[] = "File {$index}: Invalid file data";
+                    continue;
+                }
+
+                // Skip if no file uploaded
+                if ($file['error'] === UPLOAD_ERR_NO_FILE) {
+                    continue;
+                }
+
+                // Upload individual file
+                $result = self::upload($file);
+
+                if ($result['success']) {
+                    $uploaded[] = $result['filename'];
+                } else {
+                    $errors[] = "File {$index}: " . $result['error'];
+                }
             }
         }
-
+    
+        // Return results
         return [
             'success' => !empty($uploaded),
             'files' => $uploaded,
-            'errors' => $errors
+            'errors' => $errors,
+            'uploaded_count' => count($uploaded),
+            'failed_count' => count($errors)
         ];
-
     }
 
 

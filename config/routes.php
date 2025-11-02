@@ -39,6 +39,11 @@ return [
         'POST /products'             => 'V1\ProductController@create',          
         'POST /products/{id}'         => 'V1\ProductController@update',  //use POST in update coz with method PUT it alwase return empty for multipart
         'DELETE /products/{id}'      => 'V1\ProductController@delete',  
+        // Product images management
+        'GET /products/{id}/images'          => 'V1\ProductController@getProductImages',
+        'POST /products/{id}/images'         => 'V1\ProductController@uploadAdditionalImages',
+        'DELETE /products/images/{id}'       => 'V1\ProductController@deleteProductImage',
+        'POST /products/{id}/images/replace' => 'V1\ProductController@replaceProductImages',
         
         // Reviews
         'GET /products/{id}/reviews'     => 'V1\ReviewController@index',      // Product reviews
