@@ -151,7 +151,7 @@ class AuthController extends BaseController
 
         if (!$user) {
             // V1: Generic error message (information disclosure vulnerability)
-            return $this->error('Invalid email or password', 401);
+            return $this->error('Invalid email', 401);
         }
 
         // V2/V3 TODO: Check if account is locked after failed attempts
@@ -160,7 +160,7 @@ class AuthController extends BaseController
         if (!$this->userModel->verifyPassword($password, $user['password'])) {
             // V1: No rate limiting, no lockout after failed attempts
             $this->log('login_failed', ['email' => $email]);
-            return $this->error('Invalid email or password', 401);
+            return $this->error('rong password', 401);
         }
 
         // Check if user is active
@@ -217,6 +217,139 @@ class AuthController extends BaseController
             'message' => 'Logout successful'
         ]);
     }
+
+
+
+
+    //--------------------------------------------------------------
+    //forget password (v1 just update password with exist email)
+    //-------------------------------------------------------------
+    
+    //post /api/v1/password/forgot
+    /*
+     * Request Body:
+     * {
+     *     "email": "user@example.com"
+     * }
+     * 
+    */
+    public function forgotPassword()
+    {
+        $email = $this->getInput('email');
+
+        if (empty($email)) {
+            return $this->error('Email is required', 400);
+        }
+
+        if (!strpos($email, '@')) {
+            return $this->error('Invalid email format', 400);
+        }
+
+        // Find user by email
+        $user = $this->userModel->findByEmail($email);
+
+        // v1 vulnarable
+        // tells attacker if email exists in system
+        if (!$user) {
+            return $this->error('Email not found in our system', 404);
+        }
+
+        // This allows anyone to reset any password with just an email
+        $this->log('password_reset_requested', [
+            'email' => $email,
+            'user_id' => $user['id']
+        ]);
+
+        return $this->json([
+            "success"=> true,
+            'message' => 'Password reset information retrieved',
+            'email' => $email,
+            'user_id' => $user['id'],  
+            'note' => 'v1: use this user_id with new password in /password/reset endpoint'
+        ]);
+    }
+
+
+    //reset password: post /api/v1/password/reset
+    /*
+     * Request Body:
+     * {
+     *     "email": "user@example.com",
+     *     "new_password": "newpass123"
+     * }
+     * 
+     * OR (even worse - using user_id directly):
+     * {
+     *     "user_id": 5,
+     *     "new_password": "newpass123"
+     * }
+     * 
+     * Response:
+     * {
+     *     "success": true,
+     *     "message": "Password reset successfully"
+     * }
+    */
+    public function resetPassword()
+    {
+        $email = $this->getInput('email');
+        $userId = $this->getInput('user_id');
+        $newPassword = $this->getInput('new_password');
+
+        if (empty($newPassword)) {
+            return $this->error('New password is required', 400);
+        }
+
+        if (strlen($newPassword) < 4) {
+            return $this->error('Password must be at least 4 characters', 400);
+        }
+
+        $user = null;
+
+        if ($userId) {
+            $user = $this->userModel->find($userId);
+        } elseif ($email) {
+            $user = $this->userModel->findByEmail($email);
+        } else {
+            return $this->error('Email or user_id is required', 400);
+        }
+
+        if (!$user) {
+            // V1 VULNERABILITY: Information disclosure
+            return $this->error('User not found', 404);
+        }
+
+        // Reset password directly (NO SECURITY CHECKS!)
+        $success = $this->userModel->resetPasswordDirect($user['id'], $newPassword);
+
+        if (!$success) {
+            return $this->error('Failed to reset password', 500);
+        }
+
+        // V1: Destroy all sessions (basic security measure)
+        // In V2/V3, we would invalidate all user sessions from database
+        if (isset($_SESSION['user_id']) && $_SESSION['user_id'] == $user['id']) {
+            $this->destroySession();
+        }
+
+        // Log action
+        $this->log('password_reset_completed', [
+            'user_id' => $user['id'],
+            'email' => $user['email'],
+            'method' => $userId ? 'user_id' : 'email'
+        ]);
+
+        return $this->json([
+            'message' => 'Password reset successfully',
+            'note' => 'Please login with your new password'
+        ]);
+    }
+
+
+
+
+
+
 
     //---------------------------------------
     // Session Management
@@ -322,53 +455,9 @@ class AuthController extends BaseController
         return $user ? $user['id'] : null;
     }
 
-    //---------------------------------------
-    // Password Reset (Optional for V1)
-    //---------------------------------------
-
-    /**
-     * V1: Not implemented
-     * V2/V3: Will send email with secure token
-     * 
-     * POST /api/v1/password/reset-request
-     * 
-     * Request: { "email": "user@example.com" }
-    */
-    public function requestPasswordReset()
-    {
-        // V1: Not implemented - just return message
-        return $this->error('Password reset is not available in V1. Please contact admin.', 501);
-    }
+  
 
 
-    /**
-     * Reset password with token
-     * V1: Not implemented
-     * V2/V3: Will validate token and reset password
-     * 
-     * POST /api/v1/password/reset
-     * 
-     * Request: { "token": "...", "new_password": "..." }
-    */
-    public function resetPassword()
-    {
-        // V1: Not implemented
-        return $this->error('Password reset is not available in V1. Please contact admin.', 501);
-    }
 
 
-    //---------------------------------------
-    // Account Verification (Optional for V1)
-    //---------------------------------------
-
-    /**
-     * Verify email address
-     * V1: Not implemented
-     * V2/V3: Email verification with token
-     */
-    public function verifyEmail()
-    {
-        // V1: Not implemented
-        return $this->error('Email verification is not available in V1.', 501);
-    }
 }

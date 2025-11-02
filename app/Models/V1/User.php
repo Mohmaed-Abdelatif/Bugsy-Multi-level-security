@@ -125,6 +125,11 @@ class User extends BaseModel
     {
         // Get user
         $user = $this->find($userId);
+
+        // V1: Verify old password
+        if (!$this->verifyPassword($oldPassword, $user['password'])) {
+            return false;
+        }
         
         if (!$user) {
             return false;
@@ -132,6 +137,24 @@ class User extends BaseModel
 
         $hashedPassword = $this->hashPassword($newPassword);
         return $this->update($userId, ['password' => $hashedPassword]);
+    }
+
+
+    public function resetPasswordDirect($userId, $newPassword)
+    {
+        // Hash new password
+        $hashedPassword = $this->hashPassword($newPassword);
+        
+        // Update password
+        $success = $this->update($userId, ['password' => $hashedPassword]);
+        
+        if ($success) {
+            if (APP_ENV === 'development') {
+                error_log("Password reset for user ID: {$userId}");
+            }
+        }
+        
+        return $success;
     }
 
 

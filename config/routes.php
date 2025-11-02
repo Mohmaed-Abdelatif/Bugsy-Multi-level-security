@@ -28,8 +28,10 @@ return [
         'POST /register'   => 'v1\Authcontroller@register',
         'POST /login'      => 'v1\Authcontroller@login',
         'POST /logout'     => 'V1\AuthController@logout',
-        
-        
+        // Password Reset (VULNERABLE in V1)
+        'POST /password/forgot'         => 'V1\AuthController@forgotPassword',
+        'POST /password/reset'          => 'V1\AuthController@resetPassword',
+                
         //product routes
         //public access
         'GET /products'    => 'v1\ProductController@index',
