@@ -1,5 +1,8 @@
 <?php
 //manages order operations: handle checkout, order viewing, tracking, and cancellation
+// V1: Simple payment simulation (no real payment gateway)
+// V2: Integration with Stripe/PayPal
+// V3: Multiple payment gateways + fraud detection
 
 namespace Controllers\V1;
 
@@ -32,11 +35,26 @@ class OrderController extends BaseController
     //checkout: create order from cart
     // post /api/v1/checkout
     /*
+     * Complete flow:
+     * 1. Get cart items
+     * 2. Validate stock availability
+     * 3. Calculate total
+     * 4. Create order
+     * 5. Create order items
+     * 6. Process payment
+     * 7. Decrease stock
+     * 8. Clear cart
+     * 
      * Request Body:
      * {
-     *     "payment_method": "cash_on_delivery",
-     *     "shipping_address": "123 Main St, Cairo, Egypt",
-     *     "notes": "Please call before delivery"
+     *     "payment_method": "cash",        // cash, credit_card, paypal
+     *     "shipping_address": "...",
+     *     "notes": "Please call before delivery",
+     *      "card_details": {                // Optional for card payments
+     *         "card_number": "4242424242424242",
+     *         "cvv": "123",
+     *         "expiry": "12/25"
+     *     }
      * }
      * 
      * Response:
@@ -57,23 +75,27 @@ class OrderController extends BaseController
     public function checkout()
     {
         $this->requireAuth();
+
+        // Get user's cart
+        $userId = $this->getUserId();
         
         // Get input
         $paymentMethod = $this->getInput('payment_method');
         $shippingAddress = $this->getInput('shipping_address');
         $notes = $this->getInput('notes');
         
-        // Validate input
-        if (empty($paymentMethod)) {
-            return $this->error('Payment method is required', 400);
+        // Validate required fields
+        if (!$paymentMethod || !$shippingAddress) {
+            return $this->error('payment_method and shipping_address are required', 400);
+        }
+
+        // Validate payment method
+        $validPaymentMethods = ['cash', 'credit_card', 'debit_card', 'paypal', 'bank_transfer'];
+        if (!in_array($paymentMethod, $validPaymentMethods)) {
+            return $this->error('Invalid payment method', 400);
         }
         
-        if (empty($shippingAddress)) {
-            return $this->error('Shipping address is required', 400);
-        }
         
-        // Get user's cart
-        $userId = $this->getUserId();
         $cart = $this->cartModel->getUserCartWithItems($userId);
         
         if (!$cart) {
@@ -114,6 +136,26 @@ class OrderController extends BaseController
             return $this->error('Failed to create order items', 500);
         }
         
+
+        // Process payment
+        $paymentResult = $this->processPayment($orderId, $paymentMethod, $cart['total']);
+
+        if (!$paymentResult['success']) {
+            // Payment failed - mark order as failed
+            $this->orderModel->updatePaymentStatus($orderId, 'failed');
+            
+            return $this->error('Payment failed: ' . $paymentResult['error'], 400, [
+                'order_id' => $orderId,
+                'order_status' => 'pending',
+                'payment_status' => 'failed'
+            ]);
+        }
+
+        // Payment successful - update order status
+        $this->orderModel->updatePaymentStatus($orderId, $paymentResult['payment_status']);
+        $this->orderModel->updateStatus($orderId, 'processing');
+
+
         // Decrease product stock
         foreach ($cart['items'] as $item) {
             $this->productModel->decreaseStock($item['product_id'], $item['quantity']);
@@ -126,18 +168,120 @@ class OrderController extends BaseController
         $order = $this->orderModel->getWithItems($orderId);
         
         // Log action
-        $this->log('order_created', [
+        $this->log('checkout_completed', [
             'user_id' => $userId,
             'order_id' => $orderId,
             'order_number' => $order['order_number'],
-            'total' => $order['total']
+            'total' => $order['total'],
+            'payment_method' => $paymentMethod
         ]);
         
         return $this->json([
             'message' => 'Order placed successfully',
-            'order' => $order
+            'order' => $order,
+            'payment' => [
+                'status' => 'paid',
+                'method' => $paymentMethod,
+                'transaction_id' => $paymentResult['transaction_id'] ?? null
+            ]
         ], null, 201);
     }
+
+
+
+    //process payment (v1:just simulation)
+    /*
+     * V1: Simulates payment processing
+     * - Cash: Always succeeds
+     * - Cards: Simulated validation
+     * - PayPal: Simulated API
+     * 
+     * V2/V3: Real payment gateway integration
+    */
+        private function processPayment($orderId, $paymentMethod, $amount)
+    {
+        // V1: Simulated payment processing
+        
+        switch ($paymentMethod) {
+            case 'cash':
+                // Cash on delivery - always succeeds
+                return [
+                    'success' => true,
+                    'payment_status'=> 'pending',
+                    'transaction_id' => 'CASH-' . time(),
+                    'message' => 'Cash on delivery'
+                ];
+
+            case 'credit_card':
+            case 'debit_card':
+                // V1: Simulate card payment
+                $cardDetails = $this->getInput('card_details');
+                
+                if (!$cardDetails) {
+                    return [
+                        'success' => false,
+                        'error' => 'Card details required'
+                    ];
+                }
+
+                // V1: Basic validation (VULNERABLE - no real processing)
+                if (empty($cardDetails['card_number']) || 
+                    empty($cardDetails['cvv']) || 
+                    empty($cardDetails['expiry'])) {
+                    return [
+                        'success' => false,
+                        'error' => 'Incomplete card details'
+                    ];
+                }
+
+                // V1: Simulate processing delay
+                usleep(500000); // 0.5 seconds
+
+                // V1: 90% success rate (simulate occasional failures)
+                if (rand(1, 10) > 1) {
+                    return [
+                        'success' => true,
+                        'payment_status'=> 'paid',
+                        'transaction_id' => 'CARD-' . uniqid(),
+                        'message' => 'Card payment successful'
+                    ];
+                } else {
+                    return [
+                        'success' => false,
+                        'error' => 'Card declined - insufficient funds'
+                    ];
+                }
+
+            case 'paypal':
+                // V1: Simulate PayPal payment
+                usleep(500000);
+                
+                return [
+                    'success' => true,
+                    'payment_status'=> 'paid',
+                    'transaction_id' => 'PP-' . uniqid(),
+                    'message' => 'PayPal payment successful'
+                ];
+
+            case 'bank_transfer':
+                // Bank transfer - requires manual verification
+                return [
+                    'success' => true,
+                    'payment_status'=> 'pending',
+                    'transaction_id' => 'BANK-' . uniqid(),
+                    'message' => 'Bank transfer initiated - awaiting confirmation'
+                ];
+
+            default:
+                return [
+                    'success' => false,
+                    'error' => 'Invalid payment method'
+                ];
+        }
+
+    }
+
+
 
 
     //view orders: get /api/v1/orders
