@@ -1,7 +1,7 @@
 -- Create database
 CREATE DATABASE IF NOT EXISTS bugsydb CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
-USE ecommerce_security;
+USE bugsydb;
 
 -- ============================================
 -- 1. USERS TABLE (UPDATED - Added role field)

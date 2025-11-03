@@ -111,6 +111,63 @@ class AuthController extends BaseController
     }
 
 
+    //make admin add new admin: POST /api/v1/admin/add
+    public function addAdmin()
+    {
+        $this->requireAdmin();
+
+        // Get input data
+        $name = $this->getInput('name');
+        $email = $this->getInput('email');
+        $password = $this->getInput('password');
+        $phone = $this->getInput('phone');
+        $address = $this->getInput('address');
+
+        // V1: Basic validation (weak)
+        if (empty($name) || empty($email) || empty($password)) {
+            return $this->error('Name, email, and password are required', 400);
+        }
+
+        // V1: Weak email validation (just checks @ symbol)
+        if (!strpos($email, '@')) {
+            return $this->error('Invalid email format', 400);
+        }
+
+        // V1: Weak password validation (no minimum length, no complexity)
+        if (strlen($password) < 4) {
+            return $this->error('Password must be at least 4 characters', 400);
+        }
+
+        // Check if email already exists
+        if ($this->userModel->emailExists($email)) {
+            return $this->error('Email already registered', 409);
+        }
+
+        // Register user
+        $userId = $this->userModel->register([
+            'name' => $name,
+            'email' => $email,
+            'password' => $password,
+            'phone' => $phone,
+            'address' => $address,
+            'role' => 'admin' // Default role
+        ]);
+
+        if (!$userId) {
+            return $this->error('Registration failed', 500);
+        }
+
+        // Get user data (without password)
+        $user = $this->userModel->getProfile($userId);
+
+        // Return success
+        return $this->json([
+            'message' => 'new admin added successfuly',
+            'user' => $user,
+        ], null, 201);
+    }
+
+
 
     //---------------------------------------
     // Login
