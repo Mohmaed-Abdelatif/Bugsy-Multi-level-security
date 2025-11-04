@@ -5,12 +5,12 @@
 // users can only access their own cart
 // but admin can access to all users 's carts
 
-namespace Controllers\v1;
+namespace Controllers\V1;
 
 use Controllers\BaseController;
 use Models\V1\Cart;
 use Models\V1\CartItem;
-use Models\v1\Product;
+use Models\V1\Product;
 
 class CartController extends BaseController
 {
@@ -29,7 +29,7 @@ class CartController extends BaseController
 
 
     // View Cart
-    //get current user's cart with items: get /api/v1/cart
+    //get current user's cart with items: get /api/V1/cart
     public function show()
     {
         // Require authentication (login)
@@ -56,7 +56,7 @@ class CartController extends BaseController
 
 
 
-    //add product to cart: post /api/v1/cart/add
+    //add product to cart: post /api/V1/cart/add
     /*
      * Request Body:
      * {
@@ -147,7 +147,7 @@ class CartController extends BaseController
 
 
 
-    //update cart item quantity: put /api/v1/cart/items/{id}
+    //update cart item quantity: put /api/V1/cart/items/{id}
     //{id} is added as a parameter direct as i made it in app.php so no neet to make $this->requestData['params'][$key]
     //this user in his cart and edite quantity , abouve user add product when explore and add if exist quantity increase
     /*
@@ -247,7 +247,7 @@ class CartController extends BaseController
     }
 
 
-    //remove cart item: delete /api/v1/cart/items/{id}
+    //remove cart item: delete /api/V1/cart/items/{id}
     public function removeItem($itemId)
     {
         // Require authentication
@@ -328,7 +328,7 @@ class CartController extends BaseController
     }
 
 
-    //get cart items count: get /api/v1/cart/count
+    //get cart items count: get /api/V1/cart/count
     public function count()
     {
         // Require authentication
@@ -344,7 +344,7 @@ class CartController extends BaseController
     }
 
 
-    //get cart total price: get /api/v1/cart/total
+    //get cart total price: get /api/V1/cart/total
     public function total()
     {
         // Require authentication

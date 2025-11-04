@@ -2,7 +2,7 @@
 //Handles all database operations for products table
 //Inherits CRUD and query builder from BaseModel
  
-namespace Models\v1;
+namespace Models\V1;
 
 use Models\BaseModel;
 
@@ -70,7 +70,7 @@ class Product extends BaseModel
     }
 
 
-    //search products by name (v1 vlunerable, v2 secure use prepard statements)
+    //search products by name (V1 vlunerable, v2 secure use prepard statements)
     public function searchByName($keyword, $limit = null)
     {
         $sql ="

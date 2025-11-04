@@ -4,13 +4,13 @@
 //parameters in url will passed as method parameters exm: /{id}
 //--------------------------------------------------------
 //the router "APP.php" will use this file routes
-//user will enter exm: GET http://localhost/Bugsy/api/v1/products/5
+//user will enter exm: GET http://localhost/Bugsy/api/V1/products/5
 /*
 Router logic 'in App.php'
-1. Parse URL: "api/v1/products/5"
-2. Extract version: "v1"
+1. Parse URL: "api/V1/products/5"
+2. Extract version: "V1"
 3. Extract route: "products/5"
-4. Load routes config: $routes['v1']
+4. Load routes config: $routes['V1']
 5. Match pattern: "GET /products/{id}" matches "products/5"
 6. Extract parameter: {id} = 5
 7. Get handler: "V1\ProductController@show"
@@ -21,12 +21,12 @@ Router logic 'in App.php'
 return [
 
     //level 1 routes vulnerable
-    //Base: /api/v1/
+    //Base: /api/V1/
     'v1' =>[
 
         //Authentication routes
-        'POST /register'   => 'v1\Authcontroller@register',
-        'POST /login'      => 'v1\Authcontroller@login',
+        'POST /register'   => 'V1\Authcontroller@register',
+        'POST /login'      => 'V1\Authcontroller@login',
         'POST /logout'     => 'V1\AuthController@logout',
         'POST /admin/add' =>'V1\AuthController@addAdmin',
         // Password Reset (VULNERABLE in V1)
@@ -35,7 +35,7 @@ return [
                 
         //product routes
         //public access
-        'GET /products'    => 'v1\ProductController@index',
+        'GET /products'    => 'V1\ProductController@index',
         'GET /products/search'       => 'V1\ProductController@search',
         'GET /products/{id}' => 'V1\ProductController@show',
         //admin routes 
@@ -62,7 +62,7 @@ return [
         //category routes
         //public access
         'GET /categories'                => 'V1\CategoryController@index',
-        'GET /categories/{id}/products'  => 'v1\ProductController@categoryProducts',
+        'GET /categories/{id}/products'  => 'V1\ProductController@categoryProducts',
         //admin routes 
         'POST /categories'                   => 'V1\CategoryController@create',          // Create category (future)
         'POST /categories/{id}'               => 'V1\CategoryController@update',          // Update category (future)   //use POST in update coz with method PUT it alwase return empty for multipart
@@ -80,7 +80,7 @@ return [
         
 
         //cart routes
-        'GET /cart'        => 'v1\CartController@show',
+        'GET /cart'        => 'V1\CartController@show',
         'GET /cart/count'            => 'V1\CartController@count',       // Cart items count (for badge)
         'GET /cart/total'            => 'V1\CartController@total',       // Cart total price
         //admin routes 
@@ -90,8 +90,8 @@ return [
         'DELETE /cart/clear'         => 'V1\CartController@clear',       // Clear entire cart
         
         //order routes
-        'GET /orders'     =>'v1\OrderController@index',
-        'GET /orders/{id}'  =>'v1\OrderController@show',
+        'GET /orders'     =>'V1\OrderController@index',
+        'GET /orders/{id}'  =>'V1\OrderController@show',
         'GET /orders/{id}/items'     => 'V1\OrderController@items',      // Order items (VULNERABLE: IDOR)
         'GET /orders/{id}/status'    => 'V1\OrderController@status',     // Order status tracking
         'POST /checkout'             => 'V1\OrderController@checkout',   // Create order from cart (VULNERABLE: no auth)
@@ -102,10 +102,10 @@ return [
         
 
         //user profile routes
-        'GET /user/{id}'  =>'v1\UserController@show',
+        'GET /user/{id}'  =>'V1\UserController@show',
         'GET /users/{id}/orders'     => 'V1\UserController@orders',      // User's order history
         'GET /users/{id}/addresses'  => 'V1\UserController@addresses',   // Saved addresses
-        'PUT /user/{id}'  =>'v1\UserController@update',
+        'PUT /user/{id}'  =>'V1\UserController@update',
         'PUT /users/{id}/password'   => 'V1\UserController@changePassword',  // Change password (VULNERABLE)
         'POST /users/{id}/addresses' => 'V1\UserController@addAddress',  // Add new address
         'DELETE /users/{id}'         => 'V1\UserController@delete',      // Delete account

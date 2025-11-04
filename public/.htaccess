@@ -28,22 +28,6 @@
 
 
 #------------------------------------
-#CORS headers handelar extra for make sure front can call API
-#------------------------------------
-
-# <IfModule mod_headers.c>
-#     # Allow any origin (change * to specific domain in production)
-#     Header always set Access-Control-Allow-Origin "*"
-#     # Allow these HTTP methods
-#     Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
-#     # Allow these headers
-#     Header always set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With"
-#     # Cache preflight requests for 1 hour
-#     Header always set Access-Control-Max-Age "3600"
-# </IfModule>
-
-
-#------------------------------------
 #security headers: modify HTTP headers in the response before it reaches the browser.
 #------------------------------------
 
@@ -58,19 +42,6 @@
     Header always set X-XSS-Protection "1; mode=block"
 </IfModule>
 
-#These are BROWSER/SERVER level protections, NOT application code security! so not break project idea
-#WHAT HEADERS CAN'T PROTECT:
-# SQL Injection (code issue)
-# Authentication bypass (code issue)
-# Password exposure in API (code issue)
-# Accessing other users' data (code issue)
-# Cart manipulation (code issue)
-# Price manipulation (code issue)
-# Session hijacking (code issue)
-# Brute force attacks (code issue)
-#Level 1: Vulnerable code (SQL injection, etc.) 
-#Level 2: Secure code (prepared statements, etc.) 
-#Level 3: Advanced code (AI, 2FA, etc.) 
 
 
 #-------------------------------------
@@ -90,8 +61,3 @@
     ExpiresByType application/javascript "access plus 1 week"
 </IfModule>
 
-# his section tells the browser how long it should keep certain types of files (like images, CSS, JS) in its local cache before re-downloading them from the server again.
-# That means:
-# Your website loads faster.
-# You save bandwidth.
-# The server handles fewer requests.

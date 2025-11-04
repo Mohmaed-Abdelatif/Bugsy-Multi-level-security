@@ -1,6 +1,6 @@
 <?php
 /**
- * Cart Model (v1 intentionally vulnerable)
+ * Cart Model (V1 intentionally vulnerable)
  * 
  * vulnerablitey:
  * - Each user has ONE cart and it is the only allowed for him (can only access their own cart)
@@ -28,7 +28,7 @@ class Cart extends BaseModel
     //---------------------------------------
 
     //get or create cart for user (If user doesn't have cart, creates one)
-    //v1: user_id from request ( anyone can fake it) so will add authe in controller
+    //V1: user_id from request ( anyone can fake it) so will add authe in controller
     public function getOrCreate($userId)
     {
         // Check if user already has cart

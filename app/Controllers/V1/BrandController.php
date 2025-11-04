@@ -20,7 +20,7 @@ class BrandController extends BaseController
     }
 
 
-    //get all brands: get GET /api/v1/brands
+    //get all brands: get GET /api/V1/brands
     public function index()
     {
         // Get all brands with product count
@@ -162,11 +162,11 @@ class BrandController extends BaseController
     }
 
 
-    //update brand (for admin): put /api/v1/brands/{id}
+    //update brand (for admin): put /api/V1/brands/{id}
         
     /*
      * For file uploads, use: POST with _method=PUT
-     * URL: /api/v1/brands/5
+     * URL: /api/V1/brands/5
      * Body: form-data
      *   - _method: PUT
      *   - name: Updated Brand
@@ -297,7 +297,7 @@ class BrandController extends BaseController
 
 
 
-    //delete brand (for admin): delete /api/v1/brands/{id}
+    //delete brand (for admin): delete /api/V1/brands/{id}
     public function delete($id)
     {
         // Require admin

@@ -30,14 +30,14 @@ class User extends BaseModel
     }
 
 
-    //verify user passwork v1 MD5 comparison (week)
+    //verify user passwork V1 MD5 comparison (week)
     public function verifyPassword($plainPassword, $hashedPassword)
     {
         return md5($plainPassword) === $hashedPassword;
     }
 
 
-    //hash passwork v1 mD5 (weak)
+    //hash passwork V1 mD5 (weak)
     public function hashPassword($password){
         return md5($password);
     }

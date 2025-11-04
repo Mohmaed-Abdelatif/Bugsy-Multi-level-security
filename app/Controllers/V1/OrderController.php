@@ -189,7 +189,7 @@ class OrderController extends BaseController
 
 
 
-    //process payment (v1:just simulation)
+    //process payment (V1:just simulation)
     /*
      * V1: Simulates payment processing
      * - Cash: Always succeeds
@@ -284,7 +284,7 @@ class OrderController extends BaseController
 
 
 
-    //view orders: get /api/v1/orders
+    //view orders: get /api/V1/orders
     /*
      * Query params: ?page=1&per_page=10
      * 
@@ -331,7 +331,7 @@ class OrderController extends BaseController
     }
 
 
-    //get single order details: get /api/v1/orders/{id}
+    //get single order details: get /api/V1/orders/{id}
     /*
      * Response:
      * {
@@ -373,7 +373,7 @@ class OrderController extends BaseController
     }
 
 
-    //get order items: get /api/v1/orders/{id}/items
+    //get order items: get /api/V1/orders/{id}/items
     /*
      * Response:
      * {
@@ -408,7 +408,7 @@ class OrderController extends BaseController
     }
 
     //order tracking
-    // get order status: get /api/v1/orders/{id}/status
+    // get order status: get /api/V1/orders/{id}/status
     /*
      * Response:
      * {
@@ -449,7 +449,7 @@ class OrderController extends BaseController
     }
 
 
-    //cancel order: put /api/v1/orders/{id}/cancel
+    //cancel order: put /api/V1/orders/{id}/cancel
     /*
      * Response:
      * {
@@ -517,7 +517,7 @@ class OrderController extends BaseController
         ]);
     }
 
-    //update order status (for admin): put /api/v1/orders/{id}/status
+    //update order status (for admin): put /api/V1/orders/{id}/status
     /*
      * Request Body:
      * {

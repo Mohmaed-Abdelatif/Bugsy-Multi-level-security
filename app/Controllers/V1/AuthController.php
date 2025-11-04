@@ -29,7 +29,7 @@ class AuthController extends BaseController
     //---------------------------------------
     /**
      * Register new user
-     * POST /api/v1/register
+     * POST /api/V1/register
      * 
      * Request Body:
      * {
@@ -111,7 +111,7 @@ class AuthController extends BaseController
     }
 
 
-    //make admin add new admin: POST /api/v1/admin/add
+    //make admin add new admin: POST /api/V1/admin/add
     public function addAdmin()
     {
         $this->requireAdmin();
@@ -174,7 +174,7 @@ class AuthController extends BaseController
     //---------------------------------------
     /**
      * User login
-     * POST /api/v1/login
+     * POST /api/V1/login
      * 
      * Request Body:
      * {
@@ -251,7 +251,7 @@ class AuthController extends BaseController
     //---------------------------------------
     /**
      * User logout
-     * POST /api/v1/logout
+     * POST /api/V1/logout
      * 
      * Response:
      * {
@@ -279,10 +279,10 @@ class AuthController extends BaseController
 
 
     //--------------------------------------------------------------
-    //forget password (v1 just update password with exist email)
+    //forget password (V1 just update password with exist email)
     //-------------------------------------------------------------
     
-    //post /api/v1/password/forgot
+    //post /api/V1/password/forgot
     /*
      * Request Body:
      * {
@@ -305,7 +305,7 @@ class AuthController extends BaseController
         // Find user by email
         $user = $this->userModel->findByEmail($email);
 
-        // v1 vulnarable
+        // V1 vulnarable
         // tells attacker if email exists in system
         if (!$user) {
             return $this->error('Email not found in our system', 404);
@@ -322,12 +322,12 @@ class AuthController extends BaseController
             'message' => 'Password reset information retrieved',
             'email' => $email,
             'user_id' => $user['id'],  
-            'note' => 'v1: use this user_id with new password in /password/reset endpoint'
+            'note' => 'V1: use this user_id with new password in /password/reset endpoint'
         ]);
     }
 
 
-    //reset password: post /api/v1/password/reset
+    //reset password: post /api/V1/password/reset
     /*
      * Request Body:
      * {

@@ -1,6 +1,6 @@
 <?php
 //manages individual items in 
-namespace Models\v1;
+namespace Models\V1;
 
 use Models\BaseModel;
 

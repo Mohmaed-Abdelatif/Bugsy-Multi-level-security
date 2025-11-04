@@ -18,7 +18,7 @@ class ReviewController extends BaseController
         $this->productModel = new Product();
     }
     
-    //  Get all reviews for a product: get /api/v1/products/{productId}/reviews
+    //  Get all reviews for a product: get /api/V1/products/{productId}/reviews
     /**
      * Query params:
      * - page (default: 1)
@@ -80,7 +80,7 @@ class ReviewController extends BaseController
     }
     
     
-    // get single review: get /api/v1/reviews/{reviewId}
+    // get single review: get /api/V1/reviews/{reviewId}
     
     public function show($reviewId)
     {
@@ -100,7 +100,7 @@ class ReviewController extends BaseController
     }
     
 
-    //Get product rating summary: get /api/v1/products/{productId}/rating
+    //Get product rating summary: get /api/V1/products/{productId}/rating
     public function rating($productId)
     {
         // Validate product ID
@@ -120,7 +120,7 @@ class ReviewController extends BaseController
         return $this->json($stats);
     }
     
-    //Create new review: post /api/v1/products/{productId}/reviews
+    //Create new review: post /api/V1/products/{productId}/reviews
      
     /**
      * Body:
@@ -202,7 +202,7 @@ class ReviewController extends BaseController
         ], 'Review created successfully', 201);
     }
     
-    // Update existing review: put /api/v1/reviews/{reviewId}
+    // Update existing review: put /api/V1/reviews/{reviewId}
     /**
      * Body:
      * {
@@ -268,7 +268,7 @@ class ReviewController extends BaseController
     }
     
     
-    // Delete review: delete /api/v1/reviews/{reviewId}
+    // Delete review: delete /api/V1/reviews/{reviewId}
     public function delete($reviewId)
     {
         $this->requireAuth();
@@ -306,7 +306,7 @@ class ReviewController extends BaseController
         ]);
     }
     
-    // Mark review as helpful: post /api/v1/reviews/{reviewId}/helpful
+    // Mark review as helpful: post /api/V1/reviews/{reviewId}/helpful
     // V1: Simple counter increment (no tracking who voted)
     // V2: Will use review_helpfulness table to track votes
     public function markHelpful($reviewId)
@@ -339,7 +339,7 @@ class ReviewController extends BaseController
     
     /**
      * Get user's reviews
-     * GET /api/v1/users/{userId}/reviews
+     * GET /api/V1/users/{userId}/reviews
      * 
      * V1: VULNERABLE - Anyone can see any user's reviews
      */

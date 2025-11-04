@@ -13,7 +13,7 @@ require_once '../config/config.php';
 // echo ROOT;
 // echo $_SERVER['REQUEST_URI'] .'   =>url i used <br>'; //just show the url you used ,not the path taken
 // echo $_SERVER['PHP_SELF'].'       => file running<br>';
-// echo $_GET['url'] . '       => url after index.php?'   ;//shows only when rewrite url accure in public/.htaccess when use url like this /api/v1/products/5<br>  ,,,,, the goal is how to hander this url to use right controller , routes will help in that'              
+// echo $_GET['url'] . '       => url after index.php?'   ;//shows only when rewrite url accure in public/.htaccess when use url like this /api/V1/products/5<br>  ,,,,, the goal is how to hander this url to use right controller , routes will help in that'              
 
 //-------------------
 
@@ -95,7 +95,7 @@ require_once '../config/config.php';
 // }
 //--------------------------------------
 //test basemodel
-// use Models\v1\Product;
+// use Models\V1\Product;
 
 // // In a test controller:
 // $product = new Product();
@@ -163,7 +163,7 @@ require_once '../config/config.php';
 // echo "</pre>";
 
 
-// use Models\v1\Brand;
+// use Models\V1\Brand;
 // $brand = new Brand;
 
 // $itme = $brand->find(2);
@@ -177,7 +177,7 @@ require_once '../config/config.php';
 // echo "</pre>";
 
 
-// use Models\v1\Category;
+// use Models\V1\Category;
 // $brand = new Category;
 
 // $itme = $brand->find(2);
@@ -190,7 +190,7 @@ require_once '../config/config.php';
 // print_r($itme);
 // echo "</pre>";
 
-use Models\v1\Cart;
+use Models\V1\Cart;
 $brand = new Cart;
 
 ?>

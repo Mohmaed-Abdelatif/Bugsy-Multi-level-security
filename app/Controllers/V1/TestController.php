@@ -15,7 +15,7 @@ class TestController extends BaseController
     
     /**
      * Public test endpoint
-     * GET /api/v1/test/public
+     * GET /api/V1/test/public
      * 
      * No authentication required
      */
@@ -34,7 +34,7 @@ class TestController extends BaseController
     
     /**
      * Protected test endpoint
-     * GET /api/v1/test/protected
+     * GET /api/V1/test/protected
      * 
      * Requires authentication
      */
@@ -65,7 +65,7 @@ class TestController extends BaseController
     
     /**
      * Admin test endpoint
-     * GET /api/v1/test/admin
+     * GET /api/V1/test/admin
      * 
      * Requires admin role
      */
@@ -96,7 +96,7 @@ class TestController extends BaseController
     
     /**
      * Get current session info
-     * GET /api/v1/test/session
+     * GET /api/V1/test/session
      * 
      * Shows current session data (for debugging only)
      */
@@ -127,7 +127,7 @@ class TestController extends BaseController
     
     /**
      * Test ownership check
-     * GET /api/v1/test/ownership/{user_id}
+     * GET /api/V1/test/ownership/{user_id}
      * 
      * Tests if current user can access another user's resource
      */

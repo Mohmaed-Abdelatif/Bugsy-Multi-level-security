@@ -1,12 +1,6 @@
 <?php
 // Main Application Configuration
   
-// This file sets up the entire application environment:
-// - Loads database config
-// - Sets error reporting
-// - Defines app constants
-// - Configures timezone
-// - Sets CORS headers
 
 //-----------------------
  
@@ -41,9 +35,6 @@ if(APP_ENV === 'development'){
 }
 
 
-// This might fail on some PHP versions:
-// date_default_timezone_set('Africa/Cairo');
-// More compatible:
 date_default_timezone_set('UTC');  // Or your timezone
 
 
@@ -52,7 +43,6 @@ mb_internal_encoding('UTF-8');
 mb_http_output('UTF-8');
 
 //-------------------------------------------------
-//comment when test withe html
 //headers json API and CORS (cross origin resource sharing)
 header('Content-Type: application/json; charset=utf-8');
 

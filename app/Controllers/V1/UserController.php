@@ -1,10 +1,10 @@
 <?php
 //manages user profile and account operations
-namespace Controllers\v1;
+namespace Controllers\V1;
 
 use Controllers\BaseController;
-use Models\v1\User;
-use Models\v1\Order;
+use Models\V1\User;
+use Models\V1\Order;
 
 
 class UserController extends BaseController
@@ -20,7 +20,7 @@ class UserController extends BaseController
     }
 
 
-    //get user profile: get /api/v1/user/{id}
+    //get user profile: get /api/V1/user/{id}
     public function show($id)
     {
         // Require authentication
@@ -47,7 +47,7 @@ class UserController extends BaseController
     }
 
 
-    //update user profile: put /api/v1/user/{id}
+    //update user profile: put /api/V1/user/{id}
     /*
      * Request Body:
      * {
@@ -105,7 +105,7 @@ class UserController extends BaseController
     }
 
 
-    //delete user account: delete /api/v1/users/{id}
+    //delete user account: delete /api/V1/users/{id}
     public function delete($id)
     {
         // Require authentication
@@ -141,7 +141,7 @@ class UserController extends BaseController
 
 
 
-    //change password: put /api/v1/users/{id}/password
+    //change password: put /api/V1/users/{id}/password
     /*
      * Request Body:
      * {
@@ -210,7 +210,7 @@ class UserController extends BaseController
     }
 
 
-    //get user order history: get /api/v1/users/{id}/orders
+    //get user order history: get /api/V1/users/{id}/orders
     public function orders($id)
     {
         // Require authentication
@@ -254,7 +254,7 @@ class UserController extends BaseController
     // address management (for V2: will have separate addresses table)
     //-----------------------------------------------------------------
 
-    //get user addresses: get /api/v1/users/{id}/addresses
+    //get user addresses: get /api/V1/users/{id}/addresses
     public function addresses($id)
     {
         // Require authentication
@@ -291,8 +291,8 @@ class UserController extends BaseController
 
 
 
-    //add new address : post /api/v1/users/{id}/addresses
-    //in v1 will updates user address
+    //add new address : post /api/V1/users/{id}/addresses
+    //in V1 will updates user address
     //in v2 will add to separate addresses table
     public function addAddress($id)
     {

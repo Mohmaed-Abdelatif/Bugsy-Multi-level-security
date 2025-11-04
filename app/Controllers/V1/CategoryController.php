@@ -23,7 +23,7 @@ class CategoryController extends BaseController
     }
 
 
-    //get all categories: get /api/v1/categories
+    //get all categories: get /api/V1/categories
     public function index()
     {
         // Get all categories with product count
@@ -42,7 +42,7 @@ class CategoryController extends BaseController
     }
 
 
-    //get products by category: get /api/v1/categories/{id}/products
+    //get products by category: get /api/V1/categories/{id}/products
     public function categoryProducts($id)
     {
         if (!$id || !is_numeric($id)) {
@@ -79,7 +79,7 @@ class CategoryController extends BaseController
         ]);
     }
 
-    //create category (for admin): post /api/v1/categories
+    //create category (for admin): post /api/V1/categories
     /*
      * 
      * Request Body:
@@ -176,10 +176,10 @@ class CategoryController extends BaseController
     }
 
 
-    //update category(for admin): put /api/v1/categories/{id}
+    //update category(for admin): put /api/V1/categories/{id}
     /*
      * For file uploads, use: POST with _method=PUT
-     * URL: /api/v1/categories/3
+     * URL: /api/V1/categories/3
      * Body: form-data
      *   - _method: PUT
      *   - name: Updated Category
@@ -311,7 +311,7 @@ class CategoryController extends BaseController
 
 
 
-    //delete category: delete /api/v1/categories/{id}
+    //delete category: delete /api/V1/categories/{id}
     public function delete($id)
     {
         

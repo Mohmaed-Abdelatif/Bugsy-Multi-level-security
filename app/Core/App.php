@@ -1,7 +1,7 @@
 <?php
 // responsibilities:-
 // 1. Parse incoming HTTP request
-// 2. Extract API version (v1/v2/v3)
+// 2. Extract API version (V1/v2/v3)
 // 3. Match URL to route pattern
 // 4. Extract parameters from URL
 // 5. Instantiate controller
@@ -17,8 +17,8 @@
 
 
 // API endpoints exm:
-//http://localhost/Bugsy/api/v1/products/5
-//http://localhost/Bugsy/api/v1/products/5?sort=price
+//http://localhost/Bugsy/api/V1/products/5
+//http://localhost/Bugsy/api/V1/products/5?sort=price
 
 
 namespace Core;
@@ -31,14 +31,14 @@ class App
 {
     private $Url;  //for cleaned url
     private $method; //HTTP method
-    private $version; //api version (v1, v2, v3)
+    private $version; //api version (V1, v2, v3)
     private $route; //route pathe after version
     private $params = []; //array extracted url parameters
     private $requestBody = []; //array request body (parsed json)
 
     private $routes = []; //array loaded routes from config/routes.php
 
-    private $middleware = []; //array middleware stack (empty in v1,just for v2&v3)
+    private $middleware = []; //array middleware stack (empty in V1,just for v2&v3)
 
 
 
@@ -103,7 +103,7 @@ class App
         //clean the url
         $this->Url = $this->cleanUrl($this->Url);
 
-        //extract version (v1, v2, v3)
+        //extract version (V1, v2, v3)
         $this->extractVersion();
 
         //get route path (everything after version)
@@ -146,9 +146,9 @@ class App
 
     //extract API version from URL
     //Examples:
-    //-"api/v1/products" → version = "v1"
+    //-"api/V1/products" → version = "V1"
     //-"api/v2/users/5" → version = "v2"
-    //-"products" → version = "v1" (default)
+    //-"products" → version = "V1" (default)
     private function extractVersion()
     {
         //Split URL into parts
@@ -156,21 +156,21 @@ class App
 
         //check if URL starts with "api"
         if(isset($parts[0]) && $parts[0] === 'api'){
-            // check for version (v1, v2, v3)
+            // check for version (V1, v2, v3)
             if(isset($parts[1]) && preg_match('/^v[1-3]$/',$parts[1])){
                 $this->version = $parts[1];
                 return;
             }
         }
 
-        //default to v1 if no version entered
-        $this->version = 'v1';
+        //default to V1 if no version entered
+        $this->version = 'V1';
     }
 
 
     //extract route path (eveything after version)
     //Examples:
-    // - "api/v1/products/5" → route = "products/5"
+    // - "api/V1/products/5" → route = "products/5"
     // - "api/v2/cart/add" → route = "cart/add"
     private function extractRoute()
     {
@@ -261,6 +261,7 @@ class App
 
         if(empty($versionRoutes)){
             error_log("No routes defined for version: {$this->version}");
+            $this->sendError("No routes defined for version: {$this->version}");           
             return false;
         }
 
@@ -467,7 +468,7 @@ class App
             'method' => $this->method,
             'url' => $this->Url,
             'version' => $this->version,
-            'available_versions' => ['v1', 'v2', 'v3']
+            'available_versions' => ['V1', 'v2', 'v3']
         ], JSON_PRETTY_PRINT);
         exit;
     }

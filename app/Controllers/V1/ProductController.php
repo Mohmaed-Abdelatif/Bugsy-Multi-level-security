@@ -1,9 +1,9 @@
 <?php
 //handle product endpoints
-namespace Controllers\v1;
+namespace Controllers\V1;
 
 use Controllers\BaseController;
-use Models\v1\Product;
+use Models\V1\Product;
 use Helpers\ImageUpload;
 
 
@@ -25,8 +25,8 @@ class ProductController extends BaseController
     //public endpoints (read operations)
     //-----------------------------------
 
-    //list all products:  get /api/v1/products
-    // complex exm:  GET /api/v1/products?page=1&per_page=20&category=1&sort=price&order=desc
+    //list all products:  get /api/V1/products
+    // complex exm:  GET /api/V1/products?page=1&per_page=20&category=1&sort=price&order=desc
     /*
      * Response:
      * {
@@ -117,8 +117,8 @@ class ProductController extends BaseController
     }
 
 
-    //get single product details:   get /api/v1/products/{id}
-    //exm:  /api/v1/products/5
+    //get single product details:   get /api/V1/products/{id}
+    //exm:  /api/V1/products/5
     /*
      * Response:
      * {
@@ -157,7 +157,7 @@ class ProductController extends BaseController
     }
 
 
-    //search products by keyword: get /api/v1/products/search?q=keyword
+    //search products by keyword: get /api/V1/products/search?q=keyword
     public function search()
     {
         // Get search keyword
@@ -170,7 +170,7 @@ class ProductController extends BaseController
         // Get limit
         $limit = min(100, max(1, (int)$this->getQuery('limit', 20)));
         
-        // Search products vulnerable in v1
+        // Search products vulnerable in V1
         $results = $this->productModel->searchByName($keyword, $limit);
         
         // Log search in development
@@ -187,7 +187,7 @@ class ProductController extends BaseController
     }
 
 
-    //get products by category get /api/v1/categories/{id}/products
+    //get products by category get /api/V1/categories/{id}/products
     public function categoryProducts($categoryId)
     {
         // Validate category ID
@@ -222,7 +222,7 @@ class ProductController extends BaseController
 
 
 
-    //get products by brand get /api/v1/brands/{id}/products
+    //get products by brand get /api/V1/brands/{id}/products
     public function brandProducts($brandId)
     {
         // Validate brand ID
@@ -265,7 +265,7 @@ class ProductController extends BaseController
     //V2: Requires admin role (strong auth)
     //V3: Requires admin role (strong auth)+ 2FA
 
-    //create new product (admin only) : post /api/v1/products
+    //create new product (admin only) : post /api/V1/products
     /*
      * Form Data (multipart/form-data):
      * - name: string
@@ -386,10 +386,10 @@ class ProductController extends BaseController
     }
 
 
-    //update product (admin only) : put /api/v1/products/{id}
+    //update product (admin only) : put /api/V1/products/{id}
     // For image upload with PUT, use POST with _method=PUT
     /*
-     URL: /api/v1/products/5?_method=PUT
+     URL: /api/V1/products/5?_method=PUT
      - Body: form-data
        - _method: PUT
        - name: Updated Product Name
@@ -581,7 +581,7 @@ class ProductController extends BaseController
 
 
 
-    //delete product (admin only) : delete /api/v1/products/{id}
+    //delete product (admin only) : delete /api/V1/products/{id}
     public function delete($id)
     {
         $this->requireAdmin();
@@ -662,7 +662,7 @@ class ProductController extends BaseController
 
 
     //uplad additional images for product
-    //post /api/v1/products/{id}/images
+    //post /api/V1/products/{id}/images
     //use images[] key
     // If called from create/update, files are passed directly
     // If called as endpoint, get from $_FILES

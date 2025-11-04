@@ -30,7 +30,7 @@ class BaseController
         'version' => '',
     ];
 
-    //null in v1 (no authentication)
+    //null in V1 (no authentication)
     protected $user = null;
 
 
@@ -334,7 +334,7 @@ class BaseController
 
 
     //get user data from session
-    // v1 read from $_session
+    // V1 read from $_session
      private function getUserFromSession()
     {
         if (!$this->isLoggedIn()) {
