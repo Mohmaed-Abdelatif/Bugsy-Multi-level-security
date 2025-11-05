@@ -2,6 +2,7 @@
 //Entry point for all API requests: All requests flow throughh here thanks to .htaccess rewriting
 //One job: start the app
 //flow: User Request → .htaccess → index.php → App.php → Controller → Model → Database
+require_once __DIR__ . '/cors.php';
 
 
 //---------------------------------
