@@ -38,52 +38,61 @@ mb_internal_encoding('UTF-8');
 mb_http_output('UTF-8');
 
 //-------------------------------------------------
+// CORS configuration
+//-------------------------------------------------
 /*
- // Get the requesting origin
- // $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
- // $appEnv = $_ENV['APP_ENV'] ?? 'production';
+ // Set JSON content type
+ header('Content-Type: application/json; charset=utf-8');
  
- // $allowedOrigins = [
- //     'https://gp-mobile-ecommerce.vercel.app',
- // ];
+ // Get requesting origin
+ $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
  
- // if ($appEnv === 'development') {
- //     $allowedOrigins = array_merge($allowedOrigins, [
- //         'http://localhost',
- //         'http://localhost:3000',
- //         'http://localhost:5173',
- //         'http://localhost:5500',
- //         'http://localhost:8080',
- //         'http://127.0.0.1',
- //         'http://127.0.0.1:3000',
- //         'http://127.0.0.1:5173',
- //         'http://127.0.0.1:5500',
- //     ]);
- // }
+ // Define allowed origins
+ $allowedOrigins = [
+     // Production frontend
+     'https://gp-mobile-ecommerce.vercel.app',
+     
+     // Development environments
+     'http://localhost:3000',
+     'http://localhost:5173',
+     'http://localhost:5500',
+     'http://localhost:8080',
+     'http://127.0.0.1:3000',
+     'http://127.0.0.1:5173',
+     'http://127.0.0.1:5500',
+ ];
  
- // $isAllowed = in_array($origin, $allowedOrigins) ||
- //              ($appEnv === 'development' && (
- //                  strpos($origin, 'http://localhost') === 0 ||
- //                  strpos($origin, 'http://127.0.0.1') === 0
- //              ));
+ // Check if origin is allowed
+ $isAllowed = false;
  
- // if ($isAllowed && !empty($origin)) {
- //     header("Access-Control-Allow-Origin: {$origin}");
- //     // CORS headers
- //     header('Access-Control-Allow-Credentials: true');
- //     header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
- //     header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-API-Key');
- //     header('Access-Control-Max-Age: 3600');
- //     header('Content-Type: application/json; charset=utf-8');
- // }
+ // Exact match check
+ if (in_array($origin, $allowedOrigins)) {
+     $isAllowed = true;
+ }
  
- 
- 
- // // Handle OPTIONS preflight request
- // if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
- //     http_response_code(200);
- //     exit();
- // }
+ // Pattern match for localhost with any port (dev mode only)
+ if (APP_ENV === 'development') {
+     if (strpos($origin, 'http://localhost') === 0 || 
+         strpos($origin, 'http://127.0.0.1') === 0) {
+         $isAllowed = true;
+     }
+ }
+     
+ // Apply CORS headers if origin is allowed
+ if ($isAllowed && !empty($origin)) {
+     header("Access-Control-Allow-Origin: {$origin}");
+     header('Access-Control-Allow-Credentials: true');
+     header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+     header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
+     header('Access-Control-Max-Age: 3600');
+ }
+     
+ // Handle OPTIONS preflight request
+ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+     http_response_code(200);
+     exit();
+ }
+
 */
 
 //-------------------------------------------------
