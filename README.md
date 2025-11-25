@@ -1,5 +1,4 @@
-till now for v1 api doc explain
-# 📋 Bugsy API - Quick Reference
+# 📋 Bugsy API - Quick Reference for v1 till now
 
 **Base URL:** `http://20.174.36.199/api/v1`
 
