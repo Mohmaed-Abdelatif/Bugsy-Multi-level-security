@@ -25,8 +25,8 @@ return [
     'v1' =>[
 
         //Authentication routes
-        'POST /register'   => 'V1\Authcontroller@register',
-        'POST /login'      => 'V1\Authcontroller@login',
+        'POST /register'   => 'V1\AuthController@register',
+        'POST /login'      => 'V1\AuthController@login',
         'POST /logout'     => 'V1\AuthController@logout',
         'POST /admin/add' =>'V1\AuthController@addAdmin',
         // Password Reset (VULNERABLE in V1)
