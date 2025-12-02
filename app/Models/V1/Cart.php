@@ -110,6 +110,13 @@ class Cart extends BaseModel
         
         if ($result) {
             while ($row = $result->fetch_assoc()) {
+                // Add full image URL
+                if ($row && $row['product_image']) {
+                    $row['product_image_url'] = APP_URL . '/public/uploads/products/' . $row['product_image'];
+                } else {
+                    $row['product_image_url'] = APP_URL . '/public/uploads/products/no-image.png';
+                }
+                
                 $items[] = $row;
                 $total += $row['subtotal'];
 

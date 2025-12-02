@@ -87,7 +87,17 @@ class Product extends BaseModel
             $sql = $sql . "LIMIT {$limit}";
         }
 
-        return $this->fetchAll($sql);
+        // return $this->fetchAll($sql);
+        $product = $this->fetchOne($sql);
+    
+        // Add full image URL
+        if ($product && $product['main_image']) {
+            $product['main_image_url'] = APP_URL . '/public/uploads/products/' . $product['main_image'];
+        } else {
+            $product['main_image_url'] = APP_URL . '/public/uploads/products/no-image.png';
+        }
+        
+        return $product;
     }
 
 
