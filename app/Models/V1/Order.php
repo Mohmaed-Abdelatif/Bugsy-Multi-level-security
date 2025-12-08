@@ -117,6 +117,35 @@ class Order extends BaseModel
         return $orders;
     }
 
+    //get all orders for a user
+    public function getUsersOrders( $limit = 20, $offset = 0)
+    {
+        $limit = (int)$limit;
+        $offset = (int)$offset;
+        
+        $sql = "
+            SELECT * FROM {$this->table} 
+            ORDER BY created_at DESC 
+            LIMIT {$limit} OFFSET {$offset}
+        ";
+        $result = $this->connection->query($sql);
+
+        // $result = $this->where('user_id','=',$this->table)->orderBy('created_at','DESC')->findAll($limit,$offset);
+        
+        if (!$result) {
+            $this->logError("GetUserOrders failed",$sql);
+            return [];
+        }
+        
+        $orders = [];
+        while ($row = $result->fetch_assoc()) {
+            $orders[] = $row;
+        }
+        $result->free();
+        
+        return $orders;
+    }
+
 
     //get order with items
     public function getWithItems($orderId)
@@ -162,6 +191,23 @@ class Order extends BaseModel
     {
         $userId = $this->connection->real_escape_string($userId);
         $sql = "SELECT COUNT(*) as total FROM {$this->table} WHERE user_id = '{$userId}'";
+        
+        $result = $this->connection->query($sql);
+        
+        if (!$result) {
+            return 0;
+        }
+        
+        $row = $result->fetch_assoc();
+        $result->free();
+        
+        return (int)($row['total'] ?? 0);
+    }
+
+    //count user's total orders
+    public function countUsersOrders()
+    {
+        $sql = "SELECT COUNT(*) as total FROM {$this->table}";
         
         $result = $this->connection->query($sql);
         

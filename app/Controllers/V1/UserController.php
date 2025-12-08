@@ -46,6 +46,20 @@ class UserController extends BaseController
         ]);
     }
 
+    //show all users for admin
+    public function showAll()
+    {
+        $this->requireAdmin();
+
+        $users = $this->userModel->getAllUsers();
+        
+        
+        return $this->json([
+            'users' => $users
+        ]);
+
+    }
+
 
     //update user profile: put /api/V1/user/{id}
     /*

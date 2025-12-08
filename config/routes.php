@@ -90,13 +90,14 @@ return [
         'DELETE /cart/clear'         => 'V1\CartController@clear',       // Clear entire cart
         
         //order routes
-        'GET /orders'     =>'V1\OrderController@index',
+        'GET /orders'     =>'V1\OrderController@index',                 //user 's orders
         'GET /orders/{id}'  =>'V1\OrderController@show',
         'GET /orders/{id}/items'     => 'V1\OrderController@items',      // Order items (VULNERABLE: IDOR)
         'GET /orders/{id}/status'    => 'V1\OrderController@status',     // Order status tracking
         'POST /checkout'             => 'V1\OrderController@checkout',   // Create order from cart (VULNERABLE: no auth)
         'PUT /orders/{id}/cancel'    => 'V1\OrderController@cancel',     // Cancel order (VULNERABLE: IDOR)
         //admin routes 
+        'GET /usersorders'     =>'V1\OrderController@usersOrders',          // all orders for all users
         'PUT /orders/{id}/status'    => 'V1\OrderController@updateStatus',  // Update order status (admin)
        
         
@@ -110,6 +111,7 @@ return [
         'POST /users/{id}/addresses' => 'V1\UserController@addAddress',  // Add new address
         'DELETE /users/{id}'         => 'V1\UserController@delete',      // Delete account
         //admin routes 
+        'GET /users'  =>'V1\UserController@showAll',
 
 
         //reiews

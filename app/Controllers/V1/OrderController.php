@@ -330,6 +330,39 @@ class OrderController extends BaseController
         ]);
     }
 
+    //show all users orders for admin
+    public function usersOrders()
+    {
+        // Require authentication
+        $this->requireAdmin();
+        
+        // Get pagination
+        $pagination = $this->getPagination(10);
+        
+        // Get user's orders
+        $orders = $this->orderModel->getUsersOrders(
+            $pagination['perPage'],
+            $pagination['offset']
+        );
+        
+        // Get total count
+        $total = $this->orderModel->countUsersOrders();
+        
+        // Calculate pagination
+        $totalPages = ceil($total / $pagination['perPage']);
+        
+        return $this->json([
+            'orders' => $orders,
+            'pagination' => [
+                'total' => $total,
+                'perPage' => $pagination['perPage'],
+                'page' => $pagination['page'],
+                'totalPages' => $totalPages
+            ]
+        ]);
+
+    }
+
 
     //get single order details: get /api/V1/orders/{id}
     /*
