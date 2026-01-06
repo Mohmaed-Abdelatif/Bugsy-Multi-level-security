@@ -178,6 +178,26 @@ class User extends BaseModel
 
 
 
+    //update user profile photo, return bool success status
+    public function updateProfilePhoto($userId, $photoFilename)
+    {
+        return $this->update($userId, ['profile_photo' => $photoFilename]);
+    }
+
+    //get user profile photo
+    public function getProfilePhoto($userId)
+    {
+        $user = $this->find($userId);
+        return $user ? $user['profile_photo'] : null;
+    }
+
+    //delete user profile photo "make it null"
+    public function deleteProfilePhoto($userId)
+    {
+        return $this->update($userId, ['profile_photo' => null]);
+    }
+
+
 
     //---------------------------------------
     // User Orders & Addresses (for later controllers)

@@ -13,7 +13,6 @@ class ImageUpload
     // Max file size (5MB)
     private static $maxFileSize = 5 * 1024 * 1024; // 5MB in bytes
 
-
     //upload single image
     public static function upload($file)
     {
@@ -79,8 +78,6 @@ class ImageUpload
             'error' => 'Failed to save file'
         ];
     }
-
-
 
     //upload multiple images
     public static function uploadMultiple($files, $maxImages=5)
@@ -185,7 +182,6 @@ class ImageUpload
         ];
     }
 
-
     //delete image file
     public static function delete($filename)
     {
@@ -202,7 +198,6 @@ class ImageUpload
         return false;
     }
 
-
     //get full url for image
     public static function getUrl($filename)
     {
@@ -212,7 +207,6 @@ class ImageUpload
 
         return APP_URL . '/public/uploads/products/' . $filename;
     }
-
 
     //validate image from base64 (for future JSON uploads)
     public static function uploadBase64($base64Image)
@@ -268,6 +262,225 @@ class ImageUpload
     }
 
 
+
+    //----------------------------------
+    // user image upload
+    //----------------------------------
+
+    //upload user profille photo
+    public static function uploadUserPhoto($file, $userId)
+    {
+        // Use same validation as product images
+        $instance = new self();
+        
+        // Validate file exists
+        if (!isset($file) || $file['error'] === UPLOAD_ERR_NO_FILE) {
+            return [
+                'success' => false,
+                'filename' => null,
+                'error' => 'No file uploaded'
+            ];
+        }
+        
+        // Check for upload errors
+        if ($file['error'] !== UPLOAD_ERR_OK) {
+            return [
+                'success' => false,
+                'filename' => null,
+                'error' => $instance->getUploadErrorMessage($file['error'])
+            ];
+        }
+        
+        // Validate file size (2MB max for profile photos)
+        $maxSize = 2 * 1024 * 1024; // 2MB
+        if ($file['size'] > $maxSize) {
+            return [
+                'success' => false,
+                'filename' => null,
+                'error' => 'File size exceeds 2MB limit'
+            ];
+        }
+        
+        // Validate MIME type
+        $allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+        if (!in_array($file['type'], $allowedTypes)) {
+            return [
+                'success' => false,
+                'filename' => null,
+                'error' => 'Invalid file type. Only JPEG, PNG, and WebP allowed'
+            ];
+        }
+        
+        // Generate unique filename
+        $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        $filename = 'user_' . $userId . '_' . time() . '_' . uniqid() . '.' . $extension;
+        
+        // Upload directory for user photos
+        $uploadDir = __DIR__ . '/../../public/uploads/users/';
+        $uploadPath = $uploadDir . $filename;
+        
+        // Create directory if doesn't exist
+        if (!file_exists($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+        
+        // Move uploaded file
+        if (!move_uploaded_file($file['tmp_name'], $uploadPath)) {
+            return [
+                'success' => false,
+                'filename' => null,
+                'error' => 'Failed to move uploaded file'
+            ];
+        }
+        
+        // Log success
+        if (APP_ENV === 'development') {
+            error_log("User photo uploaded: {$filename}");
+        }
+        
+        return [
+            'success' => true,
+            'filename' => $filename,
+            'error' => null
+        ];
+    }
+
+    //upoad user profile photo from base64
+    public static function uploadBase64UserPhoto($base64Data, $userId)
+    {
+        // Remove data URI prefix if present
+        if (strpos($base64Data, 'data:image') === 0) {
+            $base64Data = preg_replace('/^data:image\/\w+;base64,/', '', $base64Data);
+        }
+        
+        // Decode base64
+        $imageData = base64_decode($base64Data);
+        
+        if ($imageData === false) {
+            return [
+                'success' => false,
+                'filename' => null,
+                'error' => 'Invalid base64 data'
+            ];
+        }
+        
+        // Validate size (2MB max)
+        $maxSize = 2 * 1024 * 1024;
+        if (strlen($imageData) > $maxSize) {
+            return [
+                'success' => false,
+                'filename' => null,
+                'error' => 'Image size exceeds 2MB limit'
+            ];
+        }
+        
+        // Detect image type
+        $finfo = new \finfo(FILEINFO_MIME_TYPE);
+        $mimeType = $finfo->buffer($imageData);
+        
+        // Validate MIME type
+        $allowedTypes = [
+            'image/jpeg' => 'jpg',
+            'image/png' => 'png',
+            'image/webp' => 'webp'
+        ];
+        
+        if (!isset($allowedTypes[$mimeType])) {
+            return [
+                'success' => false,
+                'filename' => null,
+                'error' => 'Invalid image type'
+            ];
+        }
+        
+        $extension = $allowedTypes[$mimeType];
+        
+        // Generate filename
+        $filename = 'user_' . $userId . '_' . time() . '_' . uniqid() . '.' . $extension;
+        
+        // Upload directory
+        $uploadDir = __DIR__ . '/../../public/uploads/users/';
+        $uploadPath = $uploadDir . $filename;
+        
+        // Create directory if doesn't exist
+        if (!file_exists($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+        
+        // Save file
+        if (file_put_contents($uploadPath, $imageData) === false) {
+            return [
+                'success' => false,
+                'filename' => null,
+                'error' => 'Failed to save image'
+            ];
+        }
+        
+        // Log success
+        if (APP_ENV === 'development') {
+            error_log("User photo uploaded (base64): {$filename}");
+        }
+        
+        return [
+            'success' => true,
+            'filename' => $filename,
+            'error' => null
+        ];
+    }
+
+    //delete user profile photo
+    public static function deleteUserPhoto($filename)
+    {
+        if (empty($filename)) {
+            return false;
+        }
+        
+        $uploadDir = __DIR__ . '/../../public/uploads/users/';
+        $filePath = $uploadDir . $filename;
+        
+        // Check if file exists
+        if (!file_exists($filePath)) {
+            error_log("User photo not found for deletion: {$filePath}");
+            return false;
+        }
+        
+        // Delete file
+        if (unlink($filePath)) {
+            if (APP_ENV === 'development') {
+                error_log("User photo deleted: {$filename}");
+            }
+            return true;
+        }
+        
+        error_log("Failed to delete user photo: {$filePath}");
+        return false;
+    }
+
+    //get full url for user profile photo
+    public static function getUserPhotoUrl($filename)
+    {
+        if (empty($filename)) {
+            return APP_URL . '/uploads/users/no-image.png';
+        }
+        
+        return APP_URL . '/uploads/users/' . $filename;
+    }
+
+    //get upload error message
+    private function getUploadErrorMessage($errorCode)
+    {
+        $errors = [
+            UPLOAD_ERR_INI_SIZE => 'File exceeds upload_max_filesize',
+            UPLOAD_ERR_FORM_SIZE => 'File exceeds MAX_FILE_SIZE',
+            UPLOAD_ERR_PARTIAL => 'File was only partially uploaded',
+            UPLOAD_ERR_NO_FILE => 'No file was uploaded',
+            UPLOAD_ERR_NO_TMP_DIR => 'Missing temporary folder',
+            UPLOAD_ERR_CANT_WRITE => 'Failed to write file to disk',
+            UPLOAD_ERR_EXTENSION => 'File upload stopped by extension'
+        ];
+        
+        return $errors[$errorCode] ?? 'Unknown upload error';
+    }
 
 
 }

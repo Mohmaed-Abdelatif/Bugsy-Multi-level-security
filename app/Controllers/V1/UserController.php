@@ -5,7 +5,7 @@ namespace Controllers\V1;
 use Controllers\BaseController;
 use Models\V1\User;
 use Models\V1\Order;
-
+use Helpers\ImageUpload;
 
 class UserController extends BaseController
 {
@@ -41,6 +41,13 @@ class UserController extends BaseController
             return $this->error('User not found', 404);
         }
         
+        // Add profile photo URL
+        if ($user['profile_photo']) {
+            $user['profile_photo_url'] = ImageUpload::getUserPhotoUrl($user['profile_photo']);
+        } else {
+            $user['profile_photo_url'] = ImageUpload::getUserPhotoUrl(null);
+        }
+
         return $this->json([
             'user' => $user
         ]);
@@ -117,6 +124,206 @@ class UserController extends BaseController
             'user' => $user
         ]);
     }
+
+
+    //upload or update use profile photo: post /api/v1/user/{id}/photo
+    /*
+     * Request (multipart):
+     * Content-Type: multipart/form-data
+     * Body: photo=[file]
+     * 
+     * Request (JSON):
+     * {
+     *     "photo_base64": "data:image/jpeg;base64,/9j/4AAQ..."
+     * }
+     * 
+     * Response:
+     * {
+     *     "success": true,
+     *     "message": "Profile photo updated successfully",
+     *     "data": {
+     *         "photo_url": "http://...../uploads/users/user_5_123.jpg"
+     *     }
+     * }
+    */
+    public function uploadPhoto($id)
+    {
+        // Require authentication
+        $this->requireAuth();
+        
+        // Validate ID
+        if (!$id || !is_numeric($id)) {
+            return $this->error('Invalid user ID', 400);
+        }
+        
+        // Check ownership (users can only update their own photo, admins can update any)
+        $this->checkOwnership($id, 'You cannot update this profile photo');
+        
+        // Get existing user
+        $user = $this->userModel->find($id);
+        
+        if (!$user) {
+            return $this->error('User not found', 404);
+        }
+        
+        // Determine content type
+        $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+        $isMultipart = strpos($contentType, 'multipart/form-data') !== false;
+        
+        $photoFilename = null;
+        
+        if ($isMultipart) {
+            // Handle file upload
+            if (!isset($_FILES['photo']) || $_FILES['photo']['error'] === UPLOAD_ERR_NO_FILE) {
+                return $this->error('No photo file provided', 400);
+            }
+            
+            // Upload photo
+            $uploadResult = ImageUpload::uploadUserPhoto($_FILES['photo'], $id);
+            
+            if (!$uploadResult['success']) {
+                return $this->error($uploadResult['error'], 400);
+            }
+            
+            $photoFilename = $uploadResult['filename'];
+            
+        } else {
+            // Handle base64 image
+            $photoBase64 = $this->getInput('photo_base64');
+            
+            if (empty($photoBase64)) {
+                return $this->error('No photo data provided', 400);
+            }
+            
+            // Upload base64 photo
+            $uploadResult = ImageUpload::uploadBase64UserPhoto($photoBase64, $id);
+            
+            if (!$uploadResult['success']) {
+                return $this->error($uploadResult['error'], 400);
+            }
+            
+            $photoFilename = $uploadResult['filename'];
+        }
+        
+        // Delete old photo if exists
+        if ($user['profile_photo']) {
+            ImageUpload::deleteUserPhoto($user['profile_photo']);
+        }
+        
+        // Update user profile photo
+        $success = $this->userModel->updateProfilePhoto($id, $photoFilename);
+        
+        if (!$success) {
+            // Rollback: Delete uploaded photo
+            ImageUpload::deleteUserPhoto($photoFilename);
+            return $this->error('Failed to update profile photo', 500);
+        }
+        
+        // Get photo URL
+        $photoUrl = ImageUpload::getUserPhotoUrl($photoFilename);
+        
+        // Log action
+        $this->log('profile_photo_updated', [
+            'user_id' => $id,
+            'photo' => $photoFilename
+        ]);
+        
+        return $this->json([
+            'message' => 'Profile photo updated successfully',
+            'photo_url' => $photoUrl,
+            'filename' => $photoFilename
+        ]);
+    }
+
+    //get user profile photo: get /api/v1/user/{id}/photo
+    public function getPhoto($id)
+    {
+        // Validate ID
+        if (!$id || !is_numeric($id)) {
+            return $this->error('Invalid user ID', 400);
+        }
+        
+        // Get user
+        $user = $this->userModel->find($id);
+        
+        if (!$user) {
+            return $this->error('User not found', 404);
+        }
+        
+        // Get photo filename
+        $photoFilename = $user['profile_photo'];
+        
+        if (!$photoFilename) {
+            return $this->json([
+                'photo_url' => null,
+                'filename' => null,
+                'has_photo' => false
+            ]);
+        }
+        
+        // Get photo URL
+        $photoUrl = ImageUpload::getUserPhotoUrl($photoFilename);
+        
+        return $this->json([
+            'photo_url' => $photoUrl,
+            'filename' => $photoFilename,
+            'has_photo' => true
+        ]);
+    }
+
+    //delete user profile photo: delete /api/v1/user/{id}/photo
+    public function deletePhoto($id)
+    {
+        // Require authentication
+        $this->requireAuth();
+        
+        // Validate ID
+        if (!$id || !is_numeric($id)) {
+            return $this->error('Invalid user ID', 400);
+        }
+        
+        // Check ownership
+        $this->checkOwnership($id, 'You cannot delete this profile photo');
+        
+        // Get user
+        $user = $this->userModel->find($id);
+        
+        if (!$user) {
+            return $this->error('User not found', 404);
+        }
+        
+        // Check if user has photo
+        if (!$user['profile_photo']) {
+            return $this->error('User has no profile photo', 404);
+        }
+        
+        
+        // Delete photo file
+        $fileDeleted = ImageUpload::deleteUserPhoto($user['profile_photo']);
+        
+        if (!$fileDeleted) {
+            error_log("Failed to delete photo file: {$user['profile_photo']}");
+        }
+        
+        // Remove from database
+        $success = $this->userModel->deleteProfilePhoto($id);
+        
+        if (!$success) {
+            return $this->error('Failed to delete profile photo', 500);
+        }
+        
+        // Log action
+        $this->log('profile_photo_deleted', [
+            'user_id' => $id,
+            'photo' => $user['profile_photo']
+        ]);
+        
+        return $this->json([
+            'message' => 'Profile photo deleted successfully'
+        ]);
+    }
+
+
 
 
     //delete user account: delete /api/V1/users/{id}
@@ -353,7 +560,7 @@ class UserController extends BaseController
     {
         // Require authentication
         $this->requireAuth();
-        
+
         return $this->json([
             'message' => 'Current session info',
             'session_id' => session_id(),

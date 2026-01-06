@@ -113,6 +113,10 @@ return [
         'POST /users/{id}/addresses' => 'V1\UserController@addAddress',  // Add new address
         'DELETE /users/{id}'         => 'V1\UserController@delete',      // Delete account
         'GET /me'  =>'V1\UserController@currentSessioninfo',
+        //user profile photo management
+        'POST /user/{id}/photo'     => 'V1\UserController@uploadPhoto',
+        'GET /user/{id}/photo'      => 'V1\UserController@getPhoto',
+        'DELETE /user/{id}/photo'   => 'V1\UserController@deletePhoto',
         //admin routes 
         'GET /users'  =>'V1\UserController@showAll',
 
