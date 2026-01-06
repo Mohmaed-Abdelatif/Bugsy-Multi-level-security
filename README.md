@@ -9,6 +9,7 @@
 |----------|--------|------|---------------|
 | `/register` | POST | `{name, email, password, phone, address}` | No |
 | `/login` | POST | `{email, password}` | No |
+| `/adminlogin` | POST | `{email, password}` | No |
 | `/logout` | POST | - | Yes |
 | `/password/forgot` | POST | `{email}` | No |
 | `/password/reset` | POST | `{email, new_password}` | No |
@@ -125,6 +126,12 @@
 | `/users/{id}/reviews` | GET | - | No |
 | `/users/{id}/addresses` | GET | - | Session |
 | `/users/{id}/addresses` | POST | `{address}` | Session |
+| `/me` | GET | - | Session |
+| `/users/{id}/photo` | POST | - | Session |
+| `/users/{id}/photo` | GET | - | Session |
+| `/users/{id}/photo` | DELETE | - | Session |
+
+
 
 ---
 

@@ -114,9 +114,9 @@ return [
         'DELETE /users/{id}'         => 'V1\UserController@delete',      // Delete account
         'GET /me'  =>'V1\UserController@currentSessioninfo',
         //user profile photo management
-        'POST /user/{id}/photo'     => 'V1\UserController@uploadPhoto',
-        'GET /user/{id}/photo'      => 'V1\UserController@getPhoto',
-        'DELETE /user/{id}/photo'   => 'V1\UserController@deletePhoto',
+        'POST /users/{id}/photo'     => 'V1\UserController@uploadPhoto',
+        'GET /users/{id}/photo'      => 'V1\UserController@getPhoto',
+        'DELETE /users/{id}/photo'   => 'V1\UserController@deletePhoto',
         //admin routes 
         'GET /users'  =>'V1\UserController@showAll',
 
