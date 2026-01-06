@@ -49,6 +49,34 @@ class User extends BaseModel
     }
 
 
+    // ---------------------------------------
+    // V1: Vulnerable authentication method
+    // ---------------------------------------
+    public function findByCredentials($email, $password)
+    {
+        // ❌ No escaping, no prepared statements
+        // ❌ Authentication logic delegated to SQL
+        $sql = "
+            SELECT * FROM {$this->table}
+            WHERE email = '$email'
+            AND password = '" . md5($password) . "'
+            LIMIT 1
+        ";
+
+        $result = $this->connection->query($sql);
+        return $result ? $result->fetch_assoc() : null;
+        if (!$result) {
+            $this->logError("findByCredentialsV1 failed", $sql);
+            return null;
+        }
+
+        $user = $result->fetch_assoc();
+        $result->free();
+
+        return $user ?: null;
+    }
+
+
     //verify user passwork V1 MD5 comparison (week)
     public function verifyPassword($plainPassword, $hashedPassword)
     {

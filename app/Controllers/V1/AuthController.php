@@ -202,22 +202,17 @@ class AuthController extends BaseController
         if (empty($email) || empty($password)) {
             return $this->error('Email and password are required', 400);
         }
-
-        // Find user by email
-        $user = $this->userModel->findByEmail($email);
-
-        if (!$user) {
-            // V1: Generic error message (information disclosure vulnerability)
+        // STEP 1 — enumeration via existing logic
+        $existingUser = $this->userModel->findByEmail($email);
+        if (!$existingUser) {
             return $this->error('Invalid email', 401);
         }
 
-        // V2/V3 TODO: Check if account is locked after failed attempts
+        // V1: SQL-based authentication (vulnerable)
+        $user = $this->userModel->findByCredentials($email, $password);
 
-        // Verify password
-        if (!$this->userModel->verifyPassword($password, $user['password'])) {
-            // V1: No rate limiting, no lockout after failed attempts
-            $this->log('login_failed', ['email' => $email]);
-            return $this->error('wrong password', 401);
+        if (!$user) {
+            return $this->error('Invalid credentials', 401);
         }
 
         // Check if user is active
