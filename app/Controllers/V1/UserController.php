@@ -349,5 +349,25 @@ class UserController extends BaseController
         ]);
     }
 
+    public function currentSessioninfo()
+    {
+        // Require authentication
+        $this->requireAuth();
+        
+        return $this->json([
+            'message' => 'Current session info',
+            'session_id' => session_id(),
+            'logged_in' => isset($_SESSION['logged_in']) ? $_SESSION['logged_in'] : false,
+            'session_data' => [
+                'user_id' => $_SESSION['user_id'] ?? null,
+                'user_email' => $_SESSION['user_email'] ?? null,
+                'user_name' => $_SESSION['user_name'] ?? null,
+                'user_role' => $_SESSION['user_role'] ?? null,
+                'login_time' => $_SESSION['login_time'] ?? null,
+            ],
+            'timestamp' => date('Y-m-d H:i:s')
+        ]);
+    }
+
 }
 

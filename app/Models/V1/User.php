@@ -29,6 +29,25 @@ class User extends BaseModel
         return $user ?: null;
     }
 
+    //find use by admin email
+    public function findByAdminEmail($email)
+    {
+        $email = $this->connection->real_escape_string($email);
+        $sql = "SELECT * FROM {$this->table} WHERE email = '{$email}' AND role='admin' LIMIT 1";
+        
+        $result = $this->connection->query($sql);
+        
+        if (!$result) {
+            $this->logError("FindByEmail failed", $sql);
+            return null;
+        }
+        
+        $user = $result->fetch_assoc();
+        $result->free();
+        
+        return $user ?: null;
+    }
+
 
     //verify user passwork V1 MD5 comparison (week)
     public function verifyPassword($plainPassword, $hashedPassword)

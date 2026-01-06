@@ -217,7 +217,7 @@ class AuthController extends BaseController
         if (!$this->userModel->verifyPassword($password, $user['password'])) {
             // V1: No rate limiting, no lockout after failed attempts
             $this->log('login_failed', ['email' => $email]);
-            return $this->error('rong password', 401);
+            return $this->error('wrong password', 401);
         }
 
         // Check if user is active
@@ -238,6 +238,56 @@ class AuthController extends BaseController
         return $this->json([
             'message' => 'Login successful',
             'user' => $user,
+            'session_id' => session_id()
+        ]);
+    }
+
+    //----------
+
+    public function adminLogin()
+    {
+        // Get credentials
+        $email = $this->getInput('email');
+        $password = $this->getInput('password');
+
+        // Validate input
+        if (empty($email) || empty($password)) {
+            return $this->error('Email and password are required', 400);
+        }
+
+        // Find user by email
+        $admin = $this->userModel->findByAdminEmail($email);
+
+        if (!$admin) {
+            // V1: Generic error message (information disclosure vulnerability)
+            return $this->error('Invalid admin email', 401);
+        }
+
+
+        // Verify password
+        if (!$this->userModel->verifyPassword($password, $admin['password'])) {
+            $this->log('login_failed', ['email' => $email]);
+            return $this->error('wrong password', 401);
+        }
+
+        // Check if admin is active
+        if (!$admin['is_active']) {
+            return $this->error('Account is deactivated', 403);
+        }
+
+        // Remove password from user data
+        unset($admin['password']);
+
+        // V1: Create session (vulnerable - no IP check, no expiration)
+        $this->createSession($admin);
+
+        // Log successful login
+        $this->log('login_success', ['user_id' => $admin['id'], 'email' => $email]);
+
+        // Return success
+        return $this->json([
+            'message' => 'Admin Login successful',
+            'user' => $admin,
             'session_id' => session_id()
         ]);
     }
@@ -499,22 +549,13 @@ class AuthController extends BaseController
             'role' => $_SESSION['user_role'] ?? 'customer'
         ];
     }
-    //check if current user is admin (noo need exist in basecontroller)
-    // public static function isAdmin()
-    // {
-    //     $user = self::getCurrentUser();
-    //     return $user && $user['role'] === 'admin';
-    // }
+    
     //get current user ID
     public static function getCurrentUserId()
     {
         $user = self::getCurrentUser();
         return $user ? $user['id'] : null;
     }
-
-  
-
-
 
 
 }

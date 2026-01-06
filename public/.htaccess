@@ -31,16 +31,16 @@
 #security headers: modify HTTP headers in the response before it reaches the browser.
 #------------------------------------
 
-<IfModule mod_headers.c>
-    # Prevent clickjacking : only this site with this domin can display this site in iframe
-    Header always set X-Frame-Options "SAMEORIGIN"
+# <IfModule mod_headers.c>
+#     # Prevent clickjacking : only this site with this domin can display this site in iframe
+#     Header always set X-Frame-Options "SAMEORIGIN"
     
-    # Prevent MIME type sniffing : don't guess If you serve a .js file, it will only be treated as JS, not HTML or something else.
-    Header always set X-Content-Type-Options "nosniff"
+#     # Prevent MIME type sniffing : don't guess If you serve a .js file, it will only be treated as JS, not HTML or something else.
+#     Header always set X-Content-Type-Options "nosniff"
     
-    # Enable XSS protection : “If the browser detects a possible XSS attack, block the page entirely instead of trying to sanitize it.”
-    Header always set X-XSS-Protection "1; mode=block"
-</IfModule>
+#     # Enable XSS protection : “If the browser detects a possible XSS attack, block the page entirely instead of trying to sanitize it.”
+#     Header always set X-XSS-Protection "1; mode=block"
+# </IfModule>
 
 
 

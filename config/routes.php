@@ -29,6 +29,8 @@ return [
         'POST /login'      => 'V1\AuthController@login',
         'POST /logout'     => 'V1\AuthController@logout',
         'POST /admin/add' =>'V1\AuthController@addAdmin',
+        //Authentication route for admin dashboard
+        'POST /adminlogin'      => 'V1\AuthController@adminLogin',
         // Password Reset (VULNERABLE in V1)
         'POST /password/forgot'         => 'V1\AuthController@forgotPassword',
         'POST /password/reset'          => 'V1\AuthController@resetPassword',
@@ -110,6 +112,7 @@ return [
         'PUT /users/{id}/password'   => 'V1\UserController@changePassword',  // Change password (VULNERABLE)
         'POST /users/{id}/addresses' => 'V1\UserController@addAddress',  // Add new address
         'DELETE /users/{id}'         => 'V1\UserController@delete',      // Delete account
+        'GET /me'  =>'V1\UserController@currentSessioninfo',
         //admin routes 
         'GET /users'  =>'V1\UserController@showAll',
 

@@ -11,8 +11,8 @@ define('CONFIG', ROOT . '/config');
 
 // Application constants from .env
 define('APP_NAME', $_ENV['APP_NAME'] ?? 'Bugsy');
-define('APP_ENV', $_ENV['APP_ENV'] ?? 'production');
-define('APP_URL', $_ENV['APP_URL'] ?? 'https://bugsy.infinityfreeapp.com');
+define('APP_ENV', $_ENV['APP_ENV'] ?? 'development');
+define('APP_URL', $_ENV['APP_URL'] ?? 'http://localhost/Bugsy');
 
 
 //error reporting

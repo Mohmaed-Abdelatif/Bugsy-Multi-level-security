@@ -2,12 +2,14 @@
 
 header('Content-Type: application/json');
 
-// Get origin from request
-$origin = $_SERVER['HTTP_ORIGIN'] ?? '*';
+if (isset($_SERVER['HTTP_ORIGIN'])) {
+    header("Access-Control-Allow-Origin: " . $_SERVER['HTTP_ORIGIN']);
+    header("Access-Control-Allow-Credentials: true");
+} else {
+    // No origin → no credentials
+    header("Access-Control-Allow-Origin: *");
+}
 
-// Dynamically allow all origins
-header("Access-Control-Allow-Origin: $origin");
-header('Access-Control-Allow-Credentials: true');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
 header('Access-Control-Max-Age: 3600');
