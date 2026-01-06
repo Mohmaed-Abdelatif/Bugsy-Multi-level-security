@@ -127,7 +127,7 @@
 | `/users/{id}/addresses` | GET | - | Session |
 | `/users/{id}/addresses` | POST | `{address}` | Session |
 | `/me` | GET | - | Session |
-| `/users/{id}/photo` | POST | - | Session |
+| `/users/{id}/photo` | POST | `multipart/form-data` => `photo` | Session |
 | `/users/{id}/photo` | GET | - | Session |
 | `/users/{id}/photo` | DELETE | - | Session |
 
