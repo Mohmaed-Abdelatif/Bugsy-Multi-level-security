@@ -5,7 +5,7 @@ namespace Controllers\V1;
 use Controllers\BaseController;
 use Models\V1\User;
 use Models\V1\Order;
-use Helpers\ImageUpload;
+use Helpers\V1\ImageUpload;
 
 class UserController extends BaseController
 {
@@ -556,6 +556,7 @@ class UserController extends BaseController
         ]);
     }
 
+    //show current user profile: get /api/V1/me
     public function currentSessioninfo()
     {
         // Require authentication
@@ -575,6 +576,59 @@ class UserController extends BaseController
             'timestamp' => date('Y-m-d H:i:s')
         ]);
     }
+
+
+    //update current user profile: put /api/V1/me
+    /*
+     * Request Body:
+     * {
+     *     "name": "Ahmed Mohamed Updated",
+     *     "phone": "01099999999",
+     *     "address": "New address"
+     * }
+     * 
+     * Response:
+     * {
+     *     "success": true,
+     *     "message": "Profile updated successfully",
+     *     "data": {
+     *         "user": {...}
+     *     }
+     * }
+    */
+    public function updateCurrentinfo()
+    {
+        // Require authentication
+        $this->requireAuth();
+
+        $id =$_SESSION['user_id'];
+        
+        // Get update data
+        $data = $this->getAllInput();
+        
+        if (empty($data)) {
+            return $this->error('No data provided', 400);
+        }
+        
+        // Update profile (password, role, is_active are automatically excluded)
+        $success = $this->userModel->updateProfile($id, $data);
+        
+        if (!$success) {
+            return $this->error('Failed to update profile', 500);
+        }
+        
+        // Get updated profile
+        $user = $this->userModel->getProfile($id);
+        
+        // Log action
+        $this->log('profile_updated', ['user_id' => $id]);
+        
+        return $this->json([
+            'message' => 'Profile updated successfully',
+            'user' => $user
+        ]);
+    }
+
 
 }
 

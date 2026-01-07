@@ -4,7 +4,7 @@ namespace Controllers\V1;
 
 use Controllers\BaseController;
 use Models\V1\Product;
-use Helpers\ImageUpload;
+use Helpers\V1\ImageUpload;
 
 
 class ProductController extends BaseController
