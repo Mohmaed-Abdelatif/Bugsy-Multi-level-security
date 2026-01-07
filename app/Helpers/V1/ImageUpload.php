@@ -15,26 +15,19 @@ class ImageUpload
     private static $userUploadDir = 'uploads/users/';
 
     // V1: NO file type restrictions (VULNERABLE!)
-    // Anyone can upload .php, .exe, .sh, etc.
-    
+
     // V1: NO size limit enforcement (VULNERABLE!)
-    // Can upload 1GB files and crash server
     private static $maxFileSize = 100 * 1024 * 1024; // 100MB (too large!)
 
     //=================================================================
     // PRODUCT IMAGE UPLOADS
     //=================================================================
-
     /**
      * Upload single product image
      * V1: VULNERABLE - Accepts any file type!
-     * 
-     * @param array $file $_FILES array element
-     * @return array Result with success status and filename
-     */
+    */
     public static function upload($file)
     {
-        // V1: Minimal validation (VULNERABLE!)
         
         // Check if file was uploaded
         if (!isset($file) || $file['error'] === UPLOAD_ERR_NO_FILE) {
@@ -62,24 +55,20 @@ class ImageUpload
 
         // V1: NO FILE TYPE VALIDATION! (CRITICAL VULNERABILITY!)
         // Any file extension is accepted: .php, .exe, .sh, .bat, etc.
-        // V2 TODO: Add strict whitelist validation
         
-        // V1: NO CONTENT VALIDATION! (CRITICAL VULNERABILITY!)
-        // File content is not checked - can upload malicious code
-        // V2 TODO: Validate file content, not just extension
-
+        
         // Generate filename (V1: Predictable pattern - VULNERABLE!)
         $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
         $filename = uniqid('product_', true) . '.' . $extension;
-        
+
         // V2 TODO: Sanitize extension, use random names
         // V3 TODO: Remove extension completely, use UUID
 
         // Create upload directory if not exists
         $uploadPath = PUBLIC_PATH . '/' . self::$productUploadDir;
         if (!is_dir($uploadPath)) {
-            mkdir($uploadPath, 0777, true); // V1: 0777 permissions (VULNERABLE!)
-            // V2 TODO: Use 0755 permissions
+            mkdir($uploadPath, 0777, true); // V1: 0777 not secure!
+            // V2: Use 0755 permissions
         }
 
         // Move uploaded file
@@ -87,8 +76,6 @@ class ImageUpload
         
         if (move_uploaded_file($file['tmp_name'], $destination)) {
             
-            // V1: No logging (VULNERABLE!)
-            // V2 TODO: Log all uploads for audit trail
             
             return [
                 'success' => true,
@@ -103,18 +90,11 @@ class ImageUpload
         ];
     }
 
-    /**
-     * Upload multiple product images
-     * V1: VULNERABLE - No validation on any file
-     * 
-     * @param array $files Files array from $_FILES
-     * @param int $maxImages Maximum images allowed
-     * @return array Result with uploaded filenames and errors
-     */
+    //Upload multiple product images
     public static function uploadMultiple($files, $maxImages = 10)
     {
         // V1: Allows 10 images (too many - DoS risk)
-        // V2 TODO: Limit to 5 images
+        // V2: Limit to 5 images
         
         $uploaded = [];
         $errors = [];
@@ -202,13 +182,7 @@ class ImageUpload
         ];
     }
 
-    /**
-     * Upload base64 encoded image
-     * V1: VULNERABLE - No validation!
-     * 
-     * @param string $base64Image Base64 encoded image data
-     * @return array Result with success status and filename
-     */
+    //Upload base64 encoded image
     public static function uploadBase64($base64Image)
     {
         // V1: Weak validation (VULNERABLE!)
@@ -261,17 +235,9 @@ class ImageUpload
         ];
     }
 
-    /**
-     * Delete product image
-     * V1: No access control check (VULNERABLE!)
-     * 
-     * @param string $filename Filename to delete
-     * @return bool Success status
-     */
+    //Delete product image
     public static function delete($filename)
     {
-        // V1: No validation if user owns this file (VULNERABLE!)
-        // Anyone can delete any file!
         
         if (empty($filename)) {
             return false;
@@ -279,7 +245,6 @@ class ImageUpload
 
         $filePath = PUBLIC_PATH . '/' . self::$productUploadDir . $filename;
 
-        // V1: No check if file belongs to user (VULNERABLE!)
         
         if (file_exists($filePath) && is_file($filePath)) {
             return unlink($filePath);
@@ -288,12 +253,7 @@ class ImageUpload
         return false;
     }
 
-    /**
-     * Get full URL for product image
-     * 
-     * @param string $filename Image filename
-     * @return string Full URL
-     */
+    
     public static function getUrl($filename)
     {
         if (empty($filename)) {
@@ -303,18 +263,13 @@ class ImageUpload
         return APP_URL . '/uploads/products/' . $filename;
     }
 
+
+
     //=================================================================
     // USER PROFILE PHOTO UPLOADS
     //=================================================================
 
-    /**
-     * Upload user profile photo
-     * V1: VULNERABLE - Any file type accepted!
-     * 
-     * @param array $file File from $_FILES
-     * @param int $userId User ID
-     * @return array Result with success status and filename
-     */
+    
     public static function uploadUserPhoto($file, $userId)
     {
         // V1: Same vulnerabilities as product upload
@@ -345,7 +300,7 @@ class ImageUpload
             ];
         }
 
-        // V1: NO FILE TYPE VALIDATION! (VULNERABLE!)
+        // V1: NO FILE TYPE VALIDATION!
         // Can upload .php, .exe, etc. as "profile photo"
         
         // Generate filename (predictable)
@@ -376,14 +331,7 @@ class ImageUpload
         ];
     }
 
-    /**
-     * Upload base64 user photo
-     * V1: VULNERABLE - No validation!
-     * 
-     * @param string $base64Data Base64 encoded image
-     * @param int $userId User ID
-     * @return array Result
-     */
+    
     public static function uploadBase64UserPhoto($base64Data, $userId)
     {
         // V1: Weak validation
@@ -453,13 +401,7 @@ class ImageUpload
         ];
     }
 
-    /**
-     * Delete user photo
-     * V1: No ownership check (VULNERABLE!)
-     * 
-     * @param string $filename Photo filename
-     * @return bool Success status
-     */
+    
     public static function deleteUserPhoto($filename)
     {
         if (empty($filename)) {
@@ -478,12 +420,7 @@ class ImageUpload
         return unlink($filePath);
     }
 
-    /**
-     * Get user photo URL
-     * 
-     * @param string $filename Photo filename
-     * @return string Full URL
-     */
+    
     public static function getUserPhotoUrl($filename)
     {
         if (empty($filename)) {
