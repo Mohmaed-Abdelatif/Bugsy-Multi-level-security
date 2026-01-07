@@ -13,7 +13,7 @@ class User extends BaseModel
     //find use by email
     public function findByEmail($email)
     {
-        $email = $this->connection->real_escape_string($email);
+        // $email = $this->connection->real_escape_string($email);
         $sql = "SELECT * FROM {$this->table} WHERE email = '{$email}' LIMIT 1";
         
         $result = $this->connection->query($sql);
@@ -32,7 +32,7 @@ class User extends BaseModel
     //find use by admin email
     public function findByAdminEmail($email)
     {
-        $email = $this->connection->real_escape_string($email);
+        // $email = $this->connection->real_escape_string($email);
         $sql = "SELECT * FROM {$this->table} WHERE email = '{$email}' AND role='admin' LIMIT 1";
         
         $result = $this->connection->query($sql);
