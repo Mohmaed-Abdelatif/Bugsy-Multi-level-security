@@ -4,7 +4,7 @@
 
 ---
 
-## 🔐 Authentication
+## Authentication
 | Endpoint | Method | Body | Auth Required |
 |----------|--------|------|---------------|
 | `/register` | POST | `{name, email, password, phone, address}` | No |
@@ -16,14 +16,14 @@
 
 ---
 
-## 🔒 Admin add a new admin (only admin can do that)
+## Admin add a new admin (only admin can do that)
 | Endpoint | Method | Body | Auth Required |
 |----------|--------|------|---------------|
 | `/admin/add` | POST | `{name, email, password, phone}` | Admin |
 
 ---
 
-## 🛍️ Products (Public)
+## Products (Public)
 | Endpoint | Method | Params | Auth Required |
 |----------|--------|--------|---------------|
 | `/products` | GET | `?page=1&per_page=20&category=1&brand=1&min_price=100&max_price=5000&sort=price&order=desc` | No |
@@ -33,7 +33,7 @@
 
 ---
 
-## 🛠️ Products (Admin)
+## Products (Admin)
 | Endpoint | Method | Content-Type | Body/Form | Auth Required |
 |----------|--------|--------------|-----------|---------------|
 | `/products` | POST | `multipart/form-data` | `name, description, price, stock, category_id, brand_id, main_image, additional_images[]` | Admin |
@@ -45,7 +45,7 @@
 
 ---
 
-## 📂 Categories (Public)
+## Categories (Public)
 | Endpoint | Method | Auth Required |
 |----------|--------|---------------|
 | `/categories` | GET | No |
@@ -53,7 +53,7 @@
 
 ---
 
-## 📂 Categories (Admin)
+## Categories (Admin)
 | Endpoint | Method | Content-Type | Body/Form | Auth Required |
 |----------|--------|--------------|-----------|---------------|
 | `/categories` | POST | `multipart/form-data` | `name, description, cat_image` | Admin |
@@ -62,7 +62,7 @@
 
 ---
 
-## 🏷️ Brands (Public)
+## Brands (Public)
 | Endpoint | Method | Auth Required |
 |----------|--------|---------------|
 | `/brands` | GET | No |
@@ -70,7 +70,7 @@
 
 ---
 
-## 🏷️ Brands (Admin)
+## Brands (Admin)
 | Endpoint | Method | Content-Type | Body/Form | Auth Required |
 |----------|--------|--------------|-----------|---------------|
 | `/brands` | POST | `multipart/form-data` | `name, logo` | Admin |
@@ -79,7 +79,7 @@
 
 ---
 
-## 🛒 Cart
+## Cart
 | Endpoint | Method | Body | Auth Required |
 |----------|--------|------|---------------|
 | `/cart` | GET | - | Session |
@@ -92,7 +92,7 @@
 
 ---
 
-## 📦 Orders (Customer)
+## Orders (Customer)
 | Endpoint | Method | Body | Auth Required |
 |----------|--------|------|---------------|
 | `/checkout` | POST | `{payment_method, shipping_address, notes, card_details}` | Session |
@@ -108,7 +108,7 @@
 
 ---
 
-## 📦 Orders (Admin)
+## Orders (Admin)
 | Endpoint | Method | Body | Auth Required |
 |----------|--------|------|---------------|
 | `/orders` | GET | `?status=pending&user_id=5&page=1` | Admin |
@@ -116,7 +116,7 @@
 
 ---
 
-## 👤 User Profile
+## User Profile
 | Endpoint | Method | Body | Auth Required |
 |----------|--------|------|---------------|
 | `/user/{id}` | GET | - | Session |
@@ -127,6 +127,7 @@
 | `/users/{id}/addresses` | GET | - | Session |
 | `/users/{id}/addresses` | POST | `{address}` | Session |
 | `/me` | GET | - | Session |
+| `/me` | PUT | - | Session |
 | `/users/{id}/photo` | POST | `multipart/form-data` => `photo` | Session |
 | `/users/{id}/photo` | GET | - | Session |
 | `/users/{id}/photo` | DELETE | - | Session |
@@ -135,7 +136,7 @@
 
 ---
 
-## 👥 User Management (Admin)
+## User Management (Admin)
 | Endpoint | Method | Auth Required |
 |----------|--------|---------------|
 | `/users` | GET | Admin |
@@ -143,7 +144,7 @@
 
 ---
 
-## ⭐ Reviews
+## Reviews
 | Endpoint | Method | Body | Auth Required |
 |----------|--------|------|---------------|
 | `/products/{id}/reviews` | GET | `?page=1&per_page=10&sort=recent` | No |
@@ -161,7 +162,7 @@
 
 ---
 
-## 🔍 Search (Coming Soon)
+## Search (Coming Soon)
 | Endpoint | Method | Params |
 |----------|--------|--------|
 | `/search` | GET | `?q=query` |
@@ -170,7 +171,7 @@
 
 ---
 
-## 🧪 Testing Endpoints
+## Testing Endpoints
 | Endpoint | Method | Auth Required |
 |----------|--------|---------------|
 | `/test/public` | GET | No |
