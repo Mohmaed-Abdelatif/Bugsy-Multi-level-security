@@ -38,9 +38,9 @@ class Product extends BaseModel
     
         // Add full image URL
         if ($product && $product['main_image']) {
-            $product['main_image_url'] = APP_URL . '/public/uploads/products/' . $product['main_image'];
+            $product['main_image_url'] = APP_URL . '/uploads/products/' . $product['main_image'];
         } else {
-            $product['main_image_url'] = APP_URL . '/public/uploads/products/no-image.png';
+            $product['main_image_url'] = APP_URL . '/uploads/products/no-image.png';
         }
         
         return $product;
@@ -92,9 +92,9 @@ class Product extends BaseModel
     
         // Add full image URL
         if ($product && $product['main_image']) {
-            $product['main_image_url'] = APP_URL . '/public/uploads/products/' . $product['main_image'];
+            $product['main_image_url'] = APP_URL . '/uploads/products/' . $product['main_image'];
         } else {
-            $product['main_image_url'] = APP_URL . '/public/uploads/products/no-image.png';
+            $product['main_image_url'] = APP_URL . '/uploads/products/no-image.png';
         }
         
         return $product;
