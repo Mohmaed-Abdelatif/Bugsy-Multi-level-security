@@ -285,25 +285,127 @@ class Review extends BaseModel
     }
     
     
-    //Mark review as helpful
-    public function incrementHelpful($reviewId)
+    //Mark review as helpful(this is make multible he;pful for same user, and its not preffered)
+    // public function incrementHelpful($reviewId)
+    // {
+    //     if ($this->connectionType === 'mysqli') {
+    //         $sql = "UPDATE {$this->table} SET helpful_count = helpful_count + 1 WHERE id = {$reviewId}";
+    //         return $this->connection->query($sql);
+    //     } else {
+    //         $sql = "UPDATE {$this->table} SET helpful_count = helpful_count + 1 WHERE id = :id";
+    //         try {
+    //             $stmt = $this->connection->prepare($sql);
+    //             return $stmt->execute(['id' => $reviewId]);
+    //         } catch (\PDOException $e) {
+    //             error_log("Failed to increment helpful count: " . $e->getMessage());
+    //             return false;
+    //         }
+    //     }
+    // }
+
+
+    //helpful vote functions:-
+
+    //check if user already voted on this review
+    public function hasUserVoted($reviewId, $userId)
     {
-        if ($this->connectionType === 'mysqli') {
-            $sql = "UPDATE {$this->table} SET helpful_count = helpful_count + 1 WHERE id = {$reviewId}";
-            return $this->connection->query($sql);
-        } else {
-            $sql = "UPDATE {$this->table} SET helpful_count = helpful_count + 1 WHERE id = :id";
-            try {
-                $stmt = $this->connection->prepare($sql);
-                return $stmt->execute(['id' => $reviewId]);
-            } catch (\PDOException $e) {
-                error_log("Failed to increment helpful count: " . $e->getMessage());
-                return false;
-            }
-        }
+        $sql = "
+            SELECT id FROM review_helpfulness 
+            WHERE review_id = {$reviewId} 
+            AND user_id = {$userId} 
+            LIMIT 1
+        ";
+
+        $result = $this->fetchOne($sql);
+        return $result !== null;
     }
-    
-    
+
+    //add helpful vote to review_helpfulness table
+    private function addHelpfulVote($reviewId, $userId)
+    {
+        $sql = "
+            INSERT INTO review_helpfulness (review_id, user_id, is_helpful) 
+            VALUES ({$reviewId}, {$userId}, 1)
+        ";
+
+        return $this->connection->query($sql);
+    }
+
+    //increse helpful count on reviews table
+    private function incrementHelpful($reviewId)
+    {
+        $sql = "
+            UPDATE {$this->table} 
+            SET helpful_count = helpful_count + 1 
+            WHERE id = {$reviewId}
+        ";
+
+        return $this->connection->query($sql);
+    }
+
+    //remove helpful vote from review_helpfulness table
+    private function removeHelpfulVote($reviewId, $userId)
+    {
+        $sql = "
+            DELETE FROM review_helpfulness 
+            WHERE review_id = {$reviewId} 
+            AND user_id = {$userId}
+        ";
+
+        return $this->connection->query($sql);
+    }
+
+    //decrese helpful count on reviews table
+    private function decrementHelpful($reviewId)
+    {
+        $sql = "
+            UPDATE {$this->table} 
+            SET helpful_count = GREATEST(helpful_count - 1, 0) 
+            WHERE id = {$reviewId}
+        ";
+
+        return $this->connection->query($sql);
+    }
+
+    //toggle helpful vote
+    //first call: add vote and increse count
+    //second call: remove vote and decrement count
+    public function toggleHelpful($reviewId, $userId)
+    {
+        // Check if user already voted
+        $alreadyVoted = $this->hasUserVoted($reviewId, $userId);
+
+        if ($alreadyVoted) {
+            // Remove vote
+            $this->removeHelpfulVote($reviewId, $userId);
+            $this->decrementHelpful($reviewId);
+            $action = 'removed';
+        } else {
+            // Add vote
+            $this->addHelpfulVote($reviewId, $userId);
+            $this->incrementHelpful($reviewId);
+            $action = 'added';
+        }
+
+        // Get updated count
+        $review = $this->find($reviewId);
+        $count = (int)($review['helpful_count'] ?? 0);
+
+        return [
+            'action' => $action,
+            'voted' => !$alreadyVoted,
+            'helpful_count' => $count
+        ];
+    }
+
+    //get helpful vote count for a review
+    public function getHelpfulCount($reviewId)
+    {
+        $review = $this->find($reviewId);
+        return (int)($review['helpful_count'] ?? 0);
+    }
+
+
     //Get top helpful reviews for a product
     public function getTopHelpfulReviews($productId, $limit = 5)
     {

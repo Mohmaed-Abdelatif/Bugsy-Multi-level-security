@@ -309,8 +309,45 @@ class ReviewController extends BaseController
     // Mark review as helpful: post /api/V1/reviews/{reviewId}/helpful
     // V1: Simple counter increment (no tracking who voted)
     // V2: Will use review_helpfulness table to track votes
+    //***(edit: will make v1 track votes) so comment this func
+    // public function markHelpful($reviewId)
+    // {
+    //     // Validate review ID
+    //     if (!$reviewId || !is_numeric($reviewId)) {
+    //         return $this->error('Invalid review ID', 400);
+    //     }
+        
+    //     // Check if review exists
+    //     if (!$this->reviewModel->exists($reviewId)) {
+    //         return $this->error('Review not found', 404);
+    //     }
+        
+    //     // Increment helpful count
+    //     $success = $this->reviewModel->incrementHelpful($reviewId);
+        
+    //     if (!$success) {
+    //         return $this->error('Failed to mark review as helpful', 500);
+    //     }
+        
+    //     // Get updated review
+    //     $review = $this->reviewModel->find($reviewId);
+        
+    //     return $this->json([
+    //         'message' => 'Review marked as helpful',
+    //         'helpful_count' => (int)$review['helpful_count']
+    //     ]);
+    // }
+    
+    //toggle review: post /api/V1/reviews/{reviewId}/helpful
+    //-for same user:
+    // -first call: add vote +1
+    // -second call:remove vote -1
+    //valnerable: user id comes from session (can be fake if session hacked) 
     public function markHelpful($reviewId)
     {
+        // Require authentication
+        $this->requireAuth();
+        
         // Validate review ID
         if (!$reviewId || !is_numeric($reviewId)) {
             return $this->error('Invalid review ID', 400);
@@ -321,22 +358,30 @@ class ReviewController extends BaseController
             return $this->error('Review not found', 404);
         }
         
-        // Increment helpful count
-        $success = $this->reviewModel->incrementHelpful($reviewId);
+        // Get current user ID from session
+        $userId = $this->getUserId();
         
-        if (!$success) {
-            return $this->error('Failed to mark review as helpful', 500);
+        if (!$userId) {
+            return $this->error('User not authenticated', 401);
         }
         
-        // Get updated review
-        $review = $this->reviewModel->find($reviewId);
+        // Toggle helpful vote
+        $result = $this->reviewModel->toggleHelpful($reviewId, $userId);
+        
+        // Build response message based on action
+        $message = $result['action'] === 'added'
+            ? 'Review marked as helpful'
+            : 'Review helpful vote removed';
         
         return $this->json([
-            'message' => 'Review marked as helpful',
-            'helpful_count' => (int)$review['helpful_count']
+            'message' => $message,
+            'action' => $result['action'],     // 'added' or 'removed'
+            'voted' => $result['voted'],        // true if vote active, false if removed
+            'helpful_count' => $result['helpful_count']
         ]);
     }
-    
+
+
     /**
      * Get user's reviews
      * GET /api/V1/users/{userId}/reviews
