@@ -61,3 +61,7 @@
     ExpiresByType application/javascript "access plus 1 week"
 </IfModule>
 
+#for read authorization header token for v2
+RewriteEngine On
+RewriteCond %{HTTP:Authorization} .
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]

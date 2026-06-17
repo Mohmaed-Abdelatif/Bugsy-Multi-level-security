@@ -231,9 +231,9 @@ class BaseController
     // V2: JWT validation
     // V3: JWT + 2FA
     // return bool True if authenticated, false otherwise (sends error and exits)
-    protected function requireAuth()
+    protected function requireAuth(): bool
     {
-         if ($this->getVersion() === 'v1') {
+        if ($this->getVersion() === 'v1') {
             // V1: Check session
             if (!$this->isLoggedIn()) {
                 $this->error('Authentication required. Please login.', 401);
@@ -245,51 +245,30 @@ class BaseController
             
             return true;
             
-        } else {
+        }else {
             // V2/V3: JWT validation
-            /*// V2 TODO: Implement JWT validation
-             
-             
-             // Get JWT token from Authorization header
-             $token = $this->getBearerToken();
-             
-             if (!$token) {
-                 $this->error('Unauthorized - No token provided', 401);
-                 return false;
-             }
-             
-             // Decode and validate token
-             $decoded = JWT::decode($token, JWT_SECRET);
-             
-             if (!$decoded) {
-                 $this->error('Unauthorized - Invalid token', 401);
-                 return false;
-             }
-             
-             // Store authenticated user data
-             $this->user = [
-                 'id' => $decoded['user_id'],
-                 'email' => $decoded['email'],
-                 'name' => $decoded['name'],
-                 'role' => $decoded['role']  // 'customer', 'admin', etc.
-             ];
-             
-             return true;
-             */
-             
-             // V3 TODO: Add 2FA check
-             /*
-             // After JWT validation, check if 2FA required
-             if ($this->user['requires_2fa'] && !$this->verify2FA()) {
-                 $this->error('2FA verification required', 403);
-                 return false;
-             }
-            */
-            $this->error('V2/V3 authentication not implemented yet', 501);
-            exit;
-        }
+            
+            // V2/V3: JWT — AuthMiddleware already verified the token
+            // and stored the decoded user in $_REQUEST['authenticated_user']
+            if (!isset($_REQUEST['authenticated_user'])) {
+                // This should never happen if AuthMiddleware ran correctly
+                // but we guard against it anyway
+                $this->error('Authentication required.', 401);
+                exit;
+            }
 
-        
+            $jwtUser = $_REQUEST['authenticated_user'];
+
+            $this->user = [
+                'id'    => $jwtUser['user_id'] ?? null,
+                'email' => $jwtUser['email']   ?? null,
+                'name'  => $jwtUser['name']    ?? null,
+                'role'  => $jwtUser['role']    ?? 'customer'
+            ];
+
+            return true;
+
+        } 
     }
 
 
@@ -379,11 +358,13 @@ class BaseController
     //This method bridges V1 and V2/V3 behavior
     protected function getUserId()
     {
+        // requireAuth() must be called before this
+        // it sets $this->user from either session (v1) or JWT payload (v2/v3)
         if (!$this->user) {
             return null;
         }
         
-        return $this->user['id'];
+        return $this->user['id'] ? (int)$this->user['id'] : null;
 
         // will make if and else to check version num to show were to return id from session or jwt tokn
     }
@@ -391,7 +372,7 @@ class BaseController
 
 
     // Check if current user owns the resource 
-    protected function checkOwnership($resourceUserId, $errorMessage = 'You do not have access to this resource')
+    protected function checkOwnership($resourceUserId, $errorMessage = 'You do not have access to this resource'): bool
     {
         // Make sure user is authenticated first
         if (!$this->user) {
@@ -405,7 +386,9 @@ class BaseController
         }
         
         // Check if user owns the resource
-        if ($this->user['id'] != $resourceUserId) {
+        //v1: user_id come from session
+        //v2&v3: user_id come from verified jwt, so cannot be faked
+        if ((int)$this->user['id'] !== (int)$resourceUserId) {
             $this->error($errorMessage, 403);
             exit;
         }

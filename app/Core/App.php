@@ -382,47 +382,32 @@ class App
      * V2 will add:
      * - JWT authentication
      * - Rate limiting
-     * - Input validation
      * 
      * V3 will add:
      * - AI threat detection
-     * - Advanced logging
      * - 2FA checks
     */
     private function applyMiddleware()
     {
 
         // V1: No middleware (intentionally vulnerable)
-        // V2: Will add authentication, rate limiting, etc.
-        // V3: Will add AI detection, advanced security
-        
-        // Placeholder for future middleware
-        // Example structure for V2:
-        /*
-        foreach ($this->middleware as $middlewareClass) {
-            $middleware = new $middlewareClass();
-            $result = $middleware->handle($this->method, $this->route, $this->requestBody);
-            
-            if (!$result['success']) {
-                $this->sendError($result['message'], $result['code']);
-                exit;
-            }
+        if ($this->version === 'v1') {
+            return;
         }
-        */
 
-        // if ($this->version === 'v2' || $this->version === 'v3') {
-        // // Check JWT token
-        // $auth = new Middleware\AuthMiddleware();
-        // if (!$auth->check()) {
-        //     $this->sendError('Unauthorized', 401);
-        // }
+        //v2&V3: run middleware stack in order
+
+        //v2
+        //1-rate limiting before auth so brute force
+        //...
+
+        //2-jwt authentication
+        $auth = new \Middleware\AuthMiddleware();
+        $auth->handle($this->method, $this->route);
+
+
         
-        // // Check rate limit
-        // $rateLimit = new Middleware\RateLimitMiddleware();
-        // if (!$rateLimit->check()) {
-        //     $this->sendError('Too Many Requests', 429);
-        // }
-        // }
+        //v3...
     }
 
     //set CORS headers for cross origin requests

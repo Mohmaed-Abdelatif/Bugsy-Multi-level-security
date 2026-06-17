@@ -149,14 +149,39 @@ return [
     //level 2 routes secure
     // Base: /api/v2/
     'v2' =>[
-        // Will include all V1 routes PLUS:
-        // - JWT authentication middleware
-        // - Role-based access control (customer, admin)
-        // - PDO prepared statements (no SQL injection)
-        // - IDOR protection (users can only access their own data)
-        // - Rate limiting
-        // - Input validation & sanitization
-        // - Password hashing (bcrypt)
+        
+        //Authentication, public (no token needed)
+        'POST /register'        => 'V2\AuthController@register',
+        'POST /login'           => 'V2\AuthController@login',
+        'POST /adminlogin'      => 'V2\AuthController@adminLogin',
+        'POST /password/forgot' => 'V2\AuthController@forgotPassword',
+        'POST /password/reset'  => 'V2\AuthController@resetPassword',
+
+        // Authentication — protected (token required)
+        'POST /logout'          => 'V2\AuthController@logout',
+        'POST /admin/add'       => 'V2\AuthController@addAdmin',
+
+        
+        //current user — protected
+        'GET /me'  => 'V2\AuthController@me',
+        'PUT /me'  => 'V2\UserController@updateCurrentinfo',
+
+
+        //User profile — protected
+        'GET /users'                 => 'V2\UserController@showAll',
+        'GET /user/{id}'             => 'V2\UserController@show',
+        'PUT /user/{id}'             => 'V2\UserController@update',
+        'DELETE /users/{id}'         => 'V2\UserController@delete',
+        'PUT /users/{id}/password'   => 'V2\UserController@changePassword',
+        'GET /users/{id}/orders'     => 'V2\UserController@orders',
+        'GET /users/{id}/addresses'  => 'V2\UserController@addresses',
+        'POST /users/{id}/addresses' => 'V2\UserController@addAddress',
+
+        //profile photo
+        'POST /users/{id}/photo'   => 'V2\UserController@uploadPhoto',
+        'GET /users/{id}/photo'    => 'V2\UserController@getPhoto',
+        'DELETE /users/{id}/photo' => 'V2\UserController@deletePhoto',
+
     ],
 
     //level 3 routes advanced

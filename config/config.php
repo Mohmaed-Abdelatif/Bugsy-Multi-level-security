@@ -14,6 +14,10 @@ define('APP_NAME', $_ENV['APP_NAME'] ?? 'Bugsy');
 define('APP_ENV', $_ENV['APP_ENV'] ?? 'development');
 define('APP_URL', $_ENV['APP_URL'] ?? 'http://localhost/Bugsy');
 
+//jwt congig for v2&v3
+define('JWT_SECRET', $_ENV['JWT_SECRET'] ?? 'imoalsaeed_01019902711_mohamedabdeltifalsaeed');
+define('JWT_EXPIRY', (int)($_ENV['JWT_EXPIRY'] ?? 3600)); // 3600/60 = 1 hour
+
 
 //error reporting
 if(APP_ENV === 'development'){
