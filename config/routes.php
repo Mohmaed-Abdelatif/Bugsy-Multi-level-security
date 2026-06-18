@@ -85,7 +85,6 @@ return [
         'GET /cart'        => 'V1\CartController@show',
         'GET /cart/count'            => 'V1\CartController@count',       // Cart items count (for badge)
         'GET /cart/total'            => 'V1\CartController@total',       // Cart total price
-        //admin routes 
         'POST /cart/add'             => 'V1\CartController@add',         // Add item to cart
         'PUT /cart/items/{id}'       => 'V1\CartController@updateItem',  // Update item quantity (VULNERABLE: IDOR)
         'DELETE /cart/items/{id}'    => 'V1\CartController@removeItem',  // Remove single item (VULNERABLE: IDOR)
@@ -182,6 +181,27 @@ return [
         'GET /users/{id}/photo'    => 'V2\UserController@getPhoto',
         'DELETE /users/{id}/photo' => 'V2\UserController@deletePhoto',
 
+        
+        //Cart routes
+        'GET /cart'              => 'V2\CartController@show',
+        'GET /cart/count'        => 'V2\CartController@count',
+        'GET /cart/total'        => 'V2\CartController@total',
+        'POST /cart/add'         => 'V2\CartController@add',
+        'PUT /cart/items/{id}'   => 'V2\CartController@updateItem',
+        'DELETE /cart/items/{id}'=> 'V2\CartController@removeItem',
+        'DELETE /cart/clear'     => 'V2\CartController@clear',
+
+
+        //orders routs
+        'GET /orders'                => 'V2\OrderController@index',
+        'GET /orders/{id}'           => 'V2\OrderController@show',
+        'GET /orders/{id}/items'     => 'V2\OrderController@items',
+        'GET /orders/{id}/status'    => 'V2\OrderController@status',
+        'POST /checkout'             => 'V2\OrderController@checkout',
+        'PUT /orders/{id}/cancel'    => 'V2\OrderController@cancel',
+        //admin routes
+        'GET /usersorders'           => 'V2\OrderController@usersOrders',
+        'PUT /orders/{id}/status'    => 'V2\OrderController@updateStatus',
     ],
 
     //level 3 routes advanced
