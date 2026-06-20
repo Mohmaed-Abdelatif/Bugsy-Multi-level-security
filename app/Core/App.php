@@ -399,7 +399,9 @@ class App
 
         //v2
         //1-rate limiting before auth so brute force
-        //...
+        //catches brute-force attempts before they reach password verification
+        $rateLimit = new \Middleware\RateLimitMiddleware();
+        $rateLimit->handle($this->method, $this->route);
 
         //2-jwt authentication
         $auth = new \Middleware\AuthMiddleware();

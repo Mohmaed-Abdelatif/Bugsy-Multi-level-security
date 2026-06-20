@@ -248,3 +248,14 @@ CREATE TABLE audit_logs (
     INDEX idx_created (created_at),
     INDEX idx_ip (ip_address)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--12. rate_limits table for Trigger rate limit 
+CREATE TABLE rate_limits (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    identifier VARCHAR(255) NOT NULL,   -- ip + endpoint combined, e.g. "192.168.1.1:POST /login"
+    attempts INT NOT NULL DEFAULT 1,
+    window_start TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_identifier (identifier),
+    INDEX idx_window (window_start)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
