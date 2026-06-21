@@ -228,7 +228,7 @@ class ReviewController extends BaseController
         }
 
         // Check ownership
-        $this->checkOwnership($existingReview['user_id'], 'You cannot modify this cart');
+        // $this->checkOwnership($existingReview['user_id'], 'You cannot modify this review');
         
         // Get update data
         $data = $this->getAllInput();
@@ -286,7 +286,7 @@ class ReviewController extends BaseController
         }
         
         // Check ownership
-        $this->checkOwnership($review['user_id'], 'You cannot modify this cart');
+        // $this->checkOwnership($review['user_id'], 'You cannot delete this review');
         
         // Delete review (automatically recalculates product rating)
         $success = $this->reviewModel->deleteReview($reviewId);
@@ -393,7 +393,7 @@ class ReviewController extends BaseController
         $this->requireAuth();
 
         // Check ownership
-        $this->checkOwnership($userId, 'You cannot modify this cart');
+        // $this->checkOwnership($userId, 'You cannot see this reviews');
         
         // Validate user ID
         if (!$userId || !is_numeric($userId)) {

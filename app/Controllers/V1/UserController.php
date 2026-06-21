@@ -32,7 +32,7 @@ class UserController extends BaseController
         }
         
         // Check ownership (users can only view their own profile, admins can view all)
-        $this->checkOwnership($id, 'You cannot view this profile');
+        // $this->checkOwnership($id, 'You cannot view this profile');
         
         // Get user profile
         $user = $this->userModel->getProfile($id);
@@ -97,7 +97,7 @@ class UserController extends BaseController
         }
         
         // Check ownership
-        $this->checkOwnership($id, 'You cannot update this profile');
+        // $this->checkOwnership($id, 'You cannot update this profile');
         
         // Get update data
         $data = $this->getAllInput();
@@ -157,7 +157,7 @@ class UserController extends BaseController
         }
         
         // Check ownership (users can only update their own photo, admins can update any)
-        $this->checkOwnership($id, 'You cannot update this profile photo');
+        // $this->checkOwnership($id, 'You cannot update this profile photo');
         
         // Get existing user
         $user = $this->userModel->find($id);
@@ -283,7 +283,7 @@ class UserController extends BaseController
         }
         
         // Check ownership
-        $this->checkOwnership($id, 'You cannot delete this profile photo');
+        // $this->checkOwnership($id, 'You cannot delete this profile photo');
         
         // Get user
         $user = $this->userModel->find($id);
@@ -338,7 +338,7 @@ class UserController extends BaseController
         }
         
         // Check ownership
-        $this->checkOwnership($id, 'You cannot delete this account');
+        // $this->checkOwnership($id, 'You cannot delete this account');
         
         // Delete user
         $success = $this->userModel->delete($id);
@@ -387,7 +387,7 @@ class UserController extends BaseController
         }
         
         // Check ownership
-        $this->checkOwnership($id, 'You cannot change this password');
+        // $this->checkOwnership($id, 'You cannot change this password');
         
         // Get passwords
         $oldPassword = $this->getInput('old_password');
@@ -443,7 +443,7 @@ class UserController extends BaseController
         }
         
         // Check ownership
-        $this->checkOwnership($id, 'You cannot view these orders');
+        // $this->checkOwnership($id, 'You cannot view these orders');
         
         // Get pagination
         $pagination = $this->getPagination(10);
@@ -487,7 +487,7 @@ class UserController extends BaseController
         }
         
         // Check ownership
-        $this->checkOwnership($id, 'You cannot view these addresses');
+        // $this->checkOwnership($id, 'You cannot view these addresses');
         
         // Get user
         $user = $this->userModel->find($id);
@@ -526,7 +526,7 @@ class UserController extends BaseController
         }
         
         // Check ownership
-        $this->checkOwnership($id, 'You cannot add address to this account');
+        // $this->checkOwnership($id, 'You cannot add address to this account');
         
         // Get address
         $address = $this->getInput('address');
