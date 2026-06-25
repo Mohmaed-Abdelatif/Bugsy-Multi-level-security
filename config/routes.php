@@ -182,6 +182,44 @@ return [
         'DELETE /users/{id}/photo' => 'V2\UserController@deletePhoto',
 
         
+        //products routes
+        'GET /products'              => 'V2\ProductController@index',
+        'GET /products/search'       => 'V2\ProductController@search',
+        'GET /products/{id}'         => 'V2\ProductController@show',
+        'POST /products'             => 'V2\ProductController@create',
+        'POST /products/{id}'        => 'V2\ProductController@update',
+        'DELETE /products/{id}'      => 'V2\ProductController@delete',
+
+        'GET /products/{id}/images'          => 'V2\ProductController@getProductImages',
+        'POST /products/{id}/images'         => 'V2\ProductController@uploadAdditionalImages',
+        'POST /products/{id}/images/replace' => 'V2\ProductController@replaceProductImages',
+        'DELETE /products/images/{id}'       => 'V2\ProductController@deleteProductImage',
+
+        //reviews routes
+        'GET /products/{id}/reviews'     => 'V2\ReviewController@index',
+        'GET /products/{id}/rating'      => 'V2\ReviewController@rating',
+        'GET /reviews/{id}'              => 'V2\ReviewController@show',
+        'POST /products/{id}/reviews'    => 'V2\ReviewController@create',
+        'PUT /reviews/{id}'              => 'V2\ReviewController@update',
+        'DELETE /reviews/{id}'           => 'V2\ReviewController@delete',
+        'POST /reviews/{id}/helpful'     => 'V2\ReviewController@markHelpful',
+        'GET /users/{id}/reviews'        => 'V2\ReviewController@userReviews',
+
+        //categories routes
+        'GET /categories'                => 'V2\CategoryController@index',
+        'GET /categories/{id}/products'  => 'V2\ProductController@categoryProducts',
+        'POST /categories'               => 'V2\CategoryController@create',
+        'POST /categories/{id}'          => 'V2\CategoryController@update',
+        'DELETE /categories/{id}'        => 'V2\CategoryController@delete',
+
+        //brands routes
+        'GET /brands'                => 'V2\BrandController@index',
+        'GET /brands/{id}/products'  => 'V2\BrandController@products',
+        'POST /brands'               => 'V2\BrandController@create',
+        'POST /brands/{id}'          => 'V2\BrandController@update',
+        'DELETE /brands/{id}'        => 'V2\BrandController@delete',
+
+        
         //Cart routes
         'GET /cart'              => 'V2\CartController@show',
         'GET /cart/count'        => 'V2\CartController@count',

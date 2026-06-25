@@ -439,21 +439,67 @@ class BaseController
     //Log activity (for debugging and audit)
     // Example:
     //  $this->log('product_created', ['product_id' => 123]);
-    protected function log($action, array $data = [])
+    protected function log(string $action, array $data = []): void
     {
         if (APP_ENV === 'development') {
             error_log("Controller Action: {$action}");
             error_log("Data: " . json_encode($data));
         }
         
-        // V2/V3 TODO: Store in audit log table
-        // This will include:
-        // - user_id (who did the action)
-        // - action (what they did)
-        // - resource_type (what they modified)
-        // - resource_id (which specific record)
-        // - ip_address (where from)
-        // - timestamp (when)
+        //only write to audit_logs for v2/v3, v1 has no audit trail intentional
+        $version = $this->getVersion();
+
+        if ($version === 'v1') {
+            return;
+        }
+
+        try {
+            $db  = \Core\Database::getInstance();
+            $pdo = $db->getPDO();
+
+            $stmt = $pdo->prepare("
+                INSERT INTO audit_logs 
+                    (user_id, action, resource_type, resource_id, ip_address, 
+                     user_agent, request_method, request_url, status_code, details, created_at)
+                VALUES 
+                    (:user_id, :action, :resource_type, :resource_id, :ip_address,
+                     :user_agent, :request_method, :request_url, :status_code, :details, NOW())
+            ");
+
+            $stmt->execute([
+                'user_id'        => $this->user['id'] ?? null,
+                'action'         => $action,
+                'resource_type'  => $data['resource_type'] ?? $this->guessResourceType($action),
+                'resource_id'    => $data['product_id'] ?? $data['order_id'] ?? $data['category_id']
+                                   ?? $data['brand_id'] ?? $data['review_id'] ?? $data['user_id'] ?? null,
+                'ip_address'     => $_SERVER['REMOTE_ADDR'] ?? null,
+                'user_agent'     => $_SERVER['HTTP_USER_AGENT'] ?? null,
+                'request_method' => $this->getMethod(),
+                'request_url'    => $_SERVER['REQUEST_URI'] ?? null,
+                'status_code'    => http_response_code() ?: 200,
+                'details'        => json_encode($data),
+            ]);
+
+        } catch (\PDOException $e) {
+            //never let audit logging failure break the actual request
+            error_log("Audit log write failed: " . $e->getMessage());
+        }
+    }
+
+
+    //helper, guesses resource_type from action name for audit_logs
+    //exm: "product_created_v2" => so will be "product"
+    private function guessResourceType(string $action): string
+    {
+        $known = ['product', 'order', 'cart', 'user', 'review', 'category', 'brand', 'login', 'logout', 'admin'];
+
+        foreach ($known as $type) {
+            if (str_starts_with($action, $type)) {
+                return $type;
+            }
+        }
+        
+        return 'unknown';
     }
 
 }
