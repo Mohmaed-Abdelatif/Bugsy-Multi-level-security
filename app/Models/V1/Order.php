@@ -12,7 +12,7 @@ class Order extends BaseModel
 
 
     //create order from cart
-    public function createOrder($userId, $total, $paymentMethod, $shippingAddress, $notes = null)
+    public function createOrder($userId, $total, $paymentMethod,$promoCode, $discount, $shippingAddress, $notes = null)
     {
         // Generate unique order number
         $orderNumber = $this->generateOrderNumber();
@@ -24,6 +24,8 @@ class Order extends BaseModel
             'total' => $total,
             'status' => 'pending',
             'payment_method' => $paymentMethod,
+            'promo_code' => $promoCode,
+            'discount_amount' => $discount,
             'payment_status' => 'pending',
             'shipping_address' => $shippingAddress,
             'notes' => $notes

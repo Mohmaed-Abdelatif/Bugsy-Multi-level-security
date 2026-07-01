@@ -139,6 +139,7 @@ CREATE TABLE product_images (
 CREATE TABLE carts (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL UNIQUE,
+    promo_code VARCHAR(50) DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -173,6 +174,8 @@ CREATE TABLE orders (
     total DECIMAL(10,2) NOT NULL,
     status ENUM('pending', 'processing', 'shipped', 'delivered', 'cancelled') DEFAULT 'pending',
     payment_method VARCHAR(50) NOT NULL,
+    promo_code VARCHAR(50) DEFAULT NULL,
+    discount_amount DECIMAL(10,2) DEFAULT 0.00,
     payment_status ENUM('pending', 'paid', 'failed', 'refunded') DEFAULT 'pending',
     shipping_address TEXT NOT NULL,
     notes TEXT,
@@ -259,3 +262,38 @@ CREATE TABLE rate_limits (
     UNIQUE KEY unique_identifier (identifier),
     INDEX idx_window (window_start)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--13. promo condes table
+CREATE TABLE promo_codes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    code VARCHAR(50) NOT NULL UNIQUE,
+    description VARCHAR(255),
+    discount_type ENUM('percentage', 'fixed') NOT NULL,
+    discount_value DECIMAL(10,2) NOT NULL,          -- 20.00 means 20% if type=percentage, or 20.00 EGP if type=fixed
+    min_order_amount DECIMAL(10,2) DEFAULT 0.00,    -- order subtotal must be >= this to qualify
+    usage_limit_total INT DEFAULT NULL,             -- NULL = unlimited total uses
+    usage_limit_per_user INT DEFAULT NULL,           -- NULL = unlimited uses per user
+    times_used INT DEFAULT 0,                        -- running total, denormalized for fast checks
+    expires_at TIMESTAMP NULL DEFAULT NULL,          -- NULL = never expires
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_code (code),
+    INDEX idx_active (is_active)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--14. promo code usage table:one row per successful use , answer if this user used this code and how many
+CREATE TABLE promo_code_usage (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    promo_id INT NOT NULL,
+    user_id INT NOT NULL,
+    order_id INT NOT NULL,
+    discount_amount DECIMAL(10,2) NOT NULL,   -- actual EGP amount discounted on this order
+    used_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (promo_id) REFERENCES promo_codes(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+    INDEX idx_promo_user (promo_id, user_id),
+    INDEX idx_order (order_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+

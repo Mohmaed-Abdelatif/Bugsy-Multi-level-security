@@ -12,11 +12,15 @@ use Models\V1\Cart;
 use Models\V1\CartItem;
 use Models\V1\Product;
 
+use Models\V1\PromoCode;
+
 class CartController extends BaseController
 {
     private $cartModel;
     private $cartItemModel;
     private $productModel;
+
+    private $promoModel;
 
     public function __construct()
     {
@@ -24,6 +28,8 @@ class CartController extends BaseController
         $this->cartModel = new Cart();
         $this->cartItemModel = new CartItem();
         $this->productModel = new Product();
+
+        $this->promoModel = new PromoCode();
     }
 
 
@@ -49,8 +55,44 @@ class CartController extends BaseController
         // Get cart with items
         $cartWithItems = $this->cartModel->getWithItems($cart['id']);
         
+        $subtotal = $cartWithItems['subtotal'];
+
+        $promoCode = $this->cartModel->getAttachedPromoCode($userId);
+        $discount = 0.00;
+        $promoInfo = null;
+
+            if ($promoCode) {
+                $validation = $this->promoModel->validate($promoCode, $userId, $subtotal);
+
+                if ($validation['valid']) {
+                    $discount = $this->promoModel->calculateDiscount($validation['promo'], $subtotal);
+                    $promoInfo = [
+                        'code' => $promoCode,
+                        'discount_type' => $validation['promo']['discount_type'],
+                        'discount_value' => (float)$validation['promo']['discount_value'],
+                        'valid' => true
+                    ];
+                } else {
+                    // promo became invalid since it was attached (expired, deactivated, limit hit)
+                    // surface this to the user but don't crash the cart view
+                    $promoInfo = [
+                        'code' => $promoCode,
+                    'valid' => false,
+                    'message' => $validation['message']
+                ];
+            }
+        }
+
+        $total = round($subtotal - $discount, 2);
+
         return $this->json([
-            'cart' => $cartWithItems
+            'cart' => [
+                'items' => $cartWithItems,
+                'subtotal' => $subtotal,
+                'discount' => $discount,
+                'total' => $total,
+                'promo' => $promoInfo
+            ]
         ]);
     }
 
@@ -358,5 +400,53 @@ class CartController extends BaseController
             'total' => $total
         ]);
     }
+    
+    // POST /api/V1/cart/promo
+    public function applyPromo()
+    {
+        $this->requireAuth();
+
+        $userId = $this->getUserId();
+        $code = trim($this->getInput('promo_code', ''));
+
+        if (empty($code)) {
+            return $this->error('Promo code is required', 400);
+        }
+
+        // need the current subtotal to validate min_order_amount
+        $subtotal = $this->cartModel->getTotal($userId);
+
+        $validation = $this->promoModel->validate($code, $userId, $subtotal);
+
+        if (!$validation['valid']) {
+            return $this->error($validation['message'], 400);
+        }
+
+        $this->cartModel->attachPromoCode($userId, $code);
+
+        $discount = $this->promoModel->calculateDiscount($validation['promo'], $subtotal);
+
+        $this->log('promo_applied', ['user_id' => $userId, 'code' => $code]);
+
+        return $this->json([
+            'message' => 'Promo code applied successfully',
+            'subtotal' => $subtotal,
+            'discount' => $discount,
+            'total' => round($subtotal - $discount, 2)
+        ]);
+    }
+
+    // DELETE /api/V1/cart/promo
+    public function removePromo()
+    {
+        $userId = $this->getUserId();
+
+        $this->cartModel->removePromoCode($userId);
+
+        $this->log('promo_removed', ['user_id' => $userId]);
+
+        return $this->json(['message' => 'Promo code removed']);
+    }
+
 
 }

@@ -111,4 +111,37 @@ class Cart extends \Models\V1\Cart
 
         return $stmt->execute(['user_id' => $userId]);
     }
+
+
+    
+    // Promo code attachment — new for V2, PDO from the start
+
+    public function attachPromoCode( $userId,  $code): bool
+    {
+        $stmt = $this->connection->prepare(
+            "UPDATE carts SET promo_code = :code WHERE user_id = :user_id"
+        );
+
+        return $stmt->execute(['code' => $code, 'user_id' => $userId]);
+    }
+
+    public function removePromoCode($userId): bool
+    {
+        $stmt = $this->connection->prepare(
+            "UPDATE carts SET promo_code = NULL WHERE user_id = :user_id"
+        );
+
+        return $stmt->execute(['user_id' => $userId]);
+    }
+
+    public function getAttachedPromoCode($userId): ?string
+    {
+        $stmt = $this->connection->prepare(
+            "SELECT promo_code FROM carts WHERE user_id = :user_id LIMIT 1"
+        );
+        $stmt->execute(['user_id' => $userId]);
+        $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+        return $row['promo_code'] ?? null;
+    }
 }

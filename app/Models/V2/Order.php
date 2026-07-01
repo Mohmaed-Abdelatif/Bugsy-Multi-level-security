@@ -84,8 +84,10 @@ class Order extends \Models\V1\Order
     //checkout
     // Creates order + order_items from cart in a transaction
     // Transaction ensures: either everything saves or nothing does
+    // re-validates and applies any attached promo code
     public function checkout(int $userId, array $data): array|false
     {
+        $promoModel = new PromoCode();
         try {
             $this->connection->beginTransaction();
 
@@ -99,7 +101,28 @@ class Order extends \Models\V1\Order
             }
 
             // Calculate total
-            $total = array_sum(array_column($cartData, 'subtotal'));
+            $subtotal = array_sum(array_column($cartData, 'subtotal'));
+
+            // Re-validate promo fresh — never trust what /cart showed earlier.
+            // Between viewing the cart and checking out, the code could have expired, been deactivated, or had its usage limit exhausted.
+            $promoCode = $cartModel->getAttachedPromoCode($userId);
+            $discount = 0.00;
+            $appliedPromo = null;
+
+            if ($promoCode) {
+                $validation = $promoModel->validate($promoCode, $userId, $subtotal);
+
+                if (!$validation['valid']) {
+                    $this->connection->rollBack();
+                    throw new \RuntimeException($validation['message']);
+                }
+
+                $discount = $promoModel->calculateDiscount($validation['promo'], $subtotal);
+                $appliedPromo = $validation['promo'];
+            }
+
+            $total = round($subtotal - $discount, 2);
+
 
             // Generate unique order number
             $orderNumber = 'ORD-' . strtoupper(bin2hex(random_bytes(5)));
@@ -107,10 +130,10 @@ class Order extends \Models\V1\Order
             // Create order
             $stmt = $this->connection->prepare("
                 INSERT INTO orders 
-                    (order_number, user_id, total, status, payment_method, 
+                    (order_number, user_id, total, status, payment_method, promo_code, discount_amount,
                      payment_status, shipping_address, notes, created_at, updated_at)
                 VALUES 
-                    (:order_number, :user_id, :total, 'pending', :payment_method,
+                    (:order_number, :user_id, :total, 'pending', :payment_method, :promo_code, :discount_amount,
                      'pending', :shipping_address, :notes, NOW(), NOW())
             ");
             $stmt->execute([
@@ -118,6 +141,8 @@ class Order extends \Models\V1\Order
                 'user_id'          => $userId,
                 'total'            => $total,
                 'payment_method'   => $data['payment_method']   ?? 'cash_on_delivery',
+                'promo_code'       => $promoCode,
+                'discount_amount'  => $discount,
                 'shipping_address' => $data['shipping_address'] ?? $data['address'] ?? '',
                 'notes'            => $data['notes']            ?? null,
             ]);
@@ -156,14 +181,25 @@ class Order extends \Models\V1\Order
                 ]);
             }
 
+            // Record promo usage now that the order is confirmed
+            if ($appliedPromo) {
+                $promoModel->recordUsage($appliedPromo['id'], $userId, $orderId, $discount);
+            }
+
             // Clear the cart after successful order
             $cartModel->clearCart($userId);
+
+            // also clears the promo attachment
+            $cartModel->removePromoCode($userId);
 
             $this->connection->commit();
 
             // Return the created order with items
             return $this->getWithItems($orderId);
 
+        } catch (\RuntimeException $e) {
+            // promo validation failure — already rolled back above
+            throw $e;
         } catch (\PDOException $e) {
             $this->connection->rollBack();
             error_log("V2 Order checkout failed: " . $e->getMessage());

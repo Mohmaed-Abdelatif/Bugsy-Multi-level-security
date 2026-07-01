@@ -13,6 +13,8 @@ use Models\V1\Cart;
 use Models\V1\CartItem;
 use Models\V1\Product;
 
+use Models\V1\PromoCode;
+
 class OrderController extends BaseController
 {
     private $orderModel;
@@ -20,6 +22,8 @@ class OrderController extends BaseController
     private $cartModel;
     private $cartItemModel;
     private $productModel;
+
+    private $promoModel;
 
     public function __construct()
     {
@@ -29,6 +33,8 @@ class OrderController extends BaseController
         $this->cartModel = new Cart();
         $this->cartItemModel = new CartItem();
         $this->productModel = new Product();
+
+        $this->promoModel = new PromoCode();
     }
 
 
@@ -77,6 +83,7 @@ class OrderController extends BaseController
         $this->requireAuth();
 
         // Get user's cart
+        $cartModel = new Cart();
         $userId = $this->getUserId();
         
         // Get input
@@ -113,12 +120,40 @@ class OrderController extends BaseController
         if (!$validation['valid']) {
             return $this->error('Cart validation failed', 400, $validation['errors']);
         }
-        
+
+
+        $subtotal = $cart['subtotal'];
+        $promoCode = $cartModel->getAttachedPromoCode($userId);
+        $discount = 0.00;
+        $appliedPromo = null;
+
+        if ($promoCode) {
+            $validation = $this->promoModel->validate($promoCode, $userId, $subtotal);
+
+            if (!$validation['valid']) {
+                // promo became invalid between cart view and checkout (someone else used
+                // the last slot, it expired, etc) — fail the checkout with a clear reason
+                // rather than silently charging full price
+                return $this->error(
+                    "Your promo code is no longer valid: {$validation['message']}",
+                    400
+                );
+            }
+
+            $discount = $this->promoModel->calculateDiscount($validation['promo'], $subtotal);
+            $appliedPromo = $validation['promo'];
+        }
+
+        $finalTotal = round($subtotal - $discount, 2);
+
+
         // Create order
         $orderId = $this->orderModel->createOrder(
             $userId,
-            $cart['total'],
+            $finalTotal,
             $paymentMethod,
+            $promoCode,
+            $discount,
             $shippingAddress,
             $notes
         );
@@ -126,6 +161,13 @@ class OrderController extends BaseController
         if (!$orderId) {
             return $this->error('Failed to create order', 500);
         }
+
+        if ($appliedPromo) {
+            $this->promoModel->recordUsage($appliedPromo['id'], $userId, $orderId, $discount);
+        }
+
+        $cartModel->removePromoCode($userId);
+        
         
         // Create order items from cart items
         $success = $this->orderItemModel->createFromCart($orderId, $cart['items']);
@@ -138,7 +180,7 @@ class OrderController extends BaseController
         
 
         // Process payment
-        $paymentResult = $this->processPayment($orderId, $paymentMethod, $cart['total']);
+        $paymentResult = $this->processPayment($orderId, $paymentMethod, $finalTotal);
 
         if (!$paymentResult['success']) {
             // Payment failed - mark order as failed

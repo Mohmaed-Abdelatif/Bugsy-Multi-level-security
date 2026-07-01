@@ -90,6 +90,16 @@ return [
         'DELETE /cart/items/{id}'    => 'V1\CartController@removeItem',  // Remove single item (VULNERABLE: IDOR)
         'DELETE /cart/clear'         => 'V1\CartController@clear',       // Clear entire cart
         
+        'POST /cart/promo'   => 'V1\CartController@applyPromo',
+        'DELETE /cart/promo' => 'V1\CartController@removePromo',
+
+        //promo code admin management
+        'GET /promo-codes'        => 'V1\PromoCodeController@index',
+        'GET /promo-codes/{id}'   => 'V1\PromoCodeController@show',
+        'POST /promo-codes'       => 'V1\PromoCodeController@create',
+        'PUT /promo-codes/{id}'   => 'V1\PromoCodeController@update',
+        'DELETE /promo-codes/{id}'=> 'V1\PromoCodeController@delete',
+
         //order routes
         'GET /orders'     =>'V1\OrderController@index',                 //user 's orders
         'GET /orders/{id}'  =>'V1\OrderController@show',
@@ -229,6 +239,15 @@ return [
         'DELETE /cart/items/{id}'=> 'V2\CartController@removeItem',
         'DELETE /cart/clear'     => 'V2\CartController@clear',
 
+        'POST /cart/promo'   => 'V2\CartController@applyPromo',
+        'DELETE /cart/promo' => 'V2\CartController@removePromo',
+        
+        //promo code admin management
+        'GET /promo-codes'         => 'V2\PromoCodeController@index',
+        'GET /promo-codes/{id}'    => 'V2\PromoCodeController@show',
+        'POST /promo-codes'        => 'V2\PromoCodeController@create',
+        'PUT /promo-codes/{id}'    => 'V2\PromoCodeController@update',
+        'DELETE /promo-codes/{id}' => 'V2\PromoCodeController@delete',
 
         //orders routs
         'GET /orders'                => 'V2\OrderController@index',

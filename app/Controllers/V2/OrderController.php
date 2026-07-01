@@ -167,11 +167,18 @@ class OrderController extends BaseController
         }
 
         // Checkout — uses PDO transaction in model
-        $order = $this->orderModel->checkout($userId, [
-            'shipping_address' => $shippingAddress,
-            'payment_method'   => $paymentMethod,
-            'notes'            => $notes,
-        ]);
+        // revalidate any attached promo
+        try {
+            $order = $this->orderModel->checkout($userId, [
+                'shipping_address' => $shippingAddress,
+                'payment_method'   => $paymentMethod,
+                'notes'            => $notes,
+            ]);
+        } catch (\RuntimeException $e) {
+            // promo code became invalid between cart preview and checkout
+            $this->error("Your promo code is no longer valid: {$e->getMessage()}", 400);
+            return;
+        }
 
         if (!$order) {
             $this->error('Checkout failed. Your cart may be empty or a product is out of stock.', 400);
@@ -182,6 +189,8 @@ class OrderController extends BaseController
             'user_id'  => $userId,
             'order_id' => $order['id'] ?? null,
             'total'    => $order['total'] ?? null,
+            'promo_code' => $order['promo_code'] ?? null,
+            'discount_amount' => $order['discount_amount'] ?? null,
         ]);
 
         $this->json([

@@ -125,7 +125,7 @@ class Cart extends BaseModel
         }
         
         $cart['items'] = $items;
-        $cart['total'] = $total;
+        $cart['subtotal'] = $total;
         $cart['item_count'] = count($items);
         
         return $cart;
@@ -265,4 +265,47 @@ class Cart extends BaseModel
         
         return $this->fetchAll($sql);
     }
+
+
+    //manage the promo_code column on the carts table
+
+    // attach a promo code string to this user's cart
+    public function attachPromoCode($userId, $code)
+    {
+        $userId = (int)$userId;
+        $code = $this->connection->real_escape_string($code);
+
+        $sql = "UPDATE carts SET promo_code = '{$code}' WHERE user_id = {$userId}";
+        return $this->connection->query($sql);
+    }
+
+    // remove the promo code from this user's cart
+    public function removePromoCode($userId)
+    {
+        $userId = (int)$userId;
+
+        $sql = "UPDATE carts SET promo_code = NULL WHERE user_id = {$userId}";
+        return $this->connection->query($sql);
+    }
+
+    // get the currently attached promo code string for this user (or null)
+    public function getAttachedPromoCode($userId)
+    {
+        $userId = (int)$userId;
+
+        $sql = "SELECT promo_code FROM carts WHERE user_id = {$userId} LIMIT 1";
+        $result = $this->connection->query($sql);
+
+        if (!$result) {
+            return null;
+        }
+
+        $row = $result->fetch_assoc();
+        $result->free();
+
+        return $row['promo_code'] ?? null;
+    }
+
 }
+
+
