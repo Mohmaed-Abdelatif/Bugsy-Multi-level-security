@@ -265,6 +265,8 @@ class CartController extends BaseController
         $userId = $this->getUserId();
 
         $this->cartModel->clearCart($userId);
+        
+        $this->cartModel->removePromoCode($userId);
 
         $this->log('cart_cleared_v2', ['user_id' => $userId]);
 

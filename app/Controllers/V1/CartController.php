@@ -378,6 +378,8 @@ class CartController extends BaseController
         
         // Clear all items
         $success = $this->cartModel->clearItems($cart['id']);
+
+        $this->cartModel->removePromoCode($userId);
         
         if (!$success) {
             return $this->error('Failed to clear cart', 500);
