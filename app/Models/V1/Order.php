@@ -182,7 +182,7 @@ class Order extends BaseModel
         }
         
         $order['items'] = $items;
-        $order['item_count'] = count($items);
+        // $order['item_count'] = count($items);
         
         return $order;
     }

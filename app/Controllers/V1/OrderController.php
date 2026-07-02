@@ -221,11 +221,6 @@ class OrderController extends BaseController
         return $this->json([
             'message' => 'Order placed successfully',
             'order' => $order,
-            'payment' => [
-                'status' => 'paid',
-                'method' => $paymentMethod,
-                'transaction_id' => $paymentResult['transaction_id'] ?? null
-            ]
         ], null, 201);
     }
 

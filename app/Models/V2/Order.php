@@ -56,7 +56,8 @@ class Order extends \Models\V1\Order
         $stmt = $this->connection->prepare("
             SELECT 
                 oi.*,
-                p.main_image
+                p.main_image as product_image,
+                p.is_available as product_available
             FROM order_items oi
             LEFT JOIN products p ON oi.product_id = p.id
             WHERE oi.order_id = :order_id
