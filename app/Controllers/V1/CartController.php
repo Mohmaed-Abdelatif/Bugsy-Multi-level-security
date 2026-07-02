@@ -439,6 +439,7 @@ class CartController extends BaseController
     // DELETE /api/V1/cart/promo
     public function removePromo()
     {
+        $this->requireAuth();
         $userId = $this->getUserId();
 
         $this->cartModel->removePromoCode($userId);
