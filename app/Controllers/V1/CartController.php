@@ -53,30 +53,49 @@ class CartController extends BaseController
         }
         
         // Get cart with items
-        $cartWithItems = $this->cartModel->getWithItems($cart['id']);
+        $rawRows = $this->cartModel->getCartWithItems($cart['id']);
         
-        $subtotal = $cartWithItems['subtotal'];
+        $items = [];
+        $subtotal  = 0;
 
+        foreach ($rawRows as $row) {
+            if (!$row['item_id']) continue;
+
+            $itemSubtotal  = (float)$row['subtotal'];
+            $subtotal    += $itemSubtotal;
+
+            $items[] = [
+                'id'           => $row['item_id'],
+                'product_id'   => $row['product_id'],
+                'product_name' => $row['product_name'],
+                'quantity'     => (int)$row['quantity'],
+                'price'        => (float)$row['price'],
+                'subtotal'     => $itemSubtotal ,
+                'main_image'   => $row['main_image'] ? APP_URL . '/public/uploads/products/' . $row['main_image'] : APP_URL . '/public/uploads/products/no-image.png'  ,
+                'stock'        => (int)$row['stock'],
+            ];
+        }
+
+        // Promo preview — re-validated fresh on every cart view
         $promoCode = $this->cartModel->getAttachedPromoCode($userId);
         $discount = 0.00;
         $promoInfo = null;
 
-            if ($promoCode) {
-                $validation = $this->promoModel->validate($promoCode, $userId, $subtotal);
+        if ($promoCode) {
+            $validation = $this->promoModel->validate($promoCode, $userId, $subtotal);
 
-                if ($validation['valid']) {
-                    $discount = $this->promoModel->calculateDiscount($validation['promo'], $subtotal);
-                    $promoInfo = [
-                        'code' => $promoCode,
-                        'discount_type' => $validation['promo']['discount_type'],
-                        'discount_value' => (float)$validation['promo']['discount_value'],
-                        'valid' => true
-                    ];
-                } else {
-                    // promo became invalid since it was attached (expired, deactivated, limit hit)
-                    // surface this to the user but don't crash the cart view
-                    $promoInfo = [
-                        'code' => $promoCode,
+            if ($validation['valid']) {
+                $discount = $this->promoModel->calculateDiscount($validation['promo'], $subtotal);
+                $promoInfo = [
+                    'code' => $promoCode,
+                    'discount_type' => $validation['promo']['discount_type'],
+                    'discount_value' => (float)$validation['promo']['discount_value'],
+                    'valid' => true
+                ];
+            } else {
+                // promo became invalid since attached — surface it, don't crash the cart
+                $promoInfo = [
+                    'code' => $promoCode,
                     'valid' => false,
                     'message' => $validation['message']
                 ];
@@ -85,13 +104,16 @@ class CartController extends BaseController
 
         $total = round($subtotal - $discount, 2);
 
-        return $this->json([
+
+        $this->json([
             'cart' => [
-                'items' => $cartWithItems,
-                'subtotal' => $subtotal,
+                'user_id' => $userId,
+                'items'   => $items,
+                'count'   => count($items),
+                'subtotal'   => round($subtotal , 2),
                 'discount' => $discount,
-                'total' => $total,
-                'promo' => $promoInfo
+                'total'    => $total,
+                'promo'    => $promoInfo,
             ]
         ]);
     }

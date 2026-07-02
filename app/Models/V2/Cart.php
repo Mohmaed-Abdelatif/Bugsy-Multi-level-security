@@ -44,7 +44,7 @@ class Cart extends \Models\V1\Cart
 
     
     //get cart with its items
-    public function getCartWithItems(int $userId): array
+    public function getCartWithItems( $userId): array
     {
         $stmt = $this->connection->prepare("
             SELECT 

@@ -131,6 +131,68 @@ class Cart extends BaseModel
         return $cart;
     }
 
+    // get cart with all items including product info
+    public function getCartWithItems($cartId)
+    {
+        //no need to use ger or create coz if didnot exist cart for this user no need to return his new created impty cart
+        //so will make method separated if needed to get by userid
+        // $cart = $this->getOrCreate($userId);
+
+        // Get cart
+        $cart = $this->find($cartId);
+        
+        if (!$cart) {
+            return null;
+        }
+        
+        // Get cart items with product details
+        $sql = "
+            SELECT 
+                c.id as cart_id,
+                c.user_id,
+                ci.id as item_id,
+                ci.product_id,
+                ci.quantity,
+                ci.price,
+                ci.quantity * ci.price as subtotal,
+                p.name as product_name,
+                p.main_image,
+                p.stock
+            FROM carts c
+            LEFT JOIN cart_items ci ON c.id = ci.cart_id
+            LEFT JOIN products p ON ci.product_id = p.id
+            WHERE ci.cart_id = '{$cartId}'
+        ";
+
+        
+        $result = $this->connection->query($sql);
+        
+        // $items = [];
+        // $total = 0;
+        
+        // if ($result) {
+        //     while ($row = $result->fetch_assoc()) {
+        //         // Add full image URL
+        //         if ($row && $row['product_image']) {
+        //             $row['product_image_url'] = APP_URL . '/public/uploads/products/' . $row['product_image'];
+        //         } else {
+        //             $row['product_image_url'] = APP_URL . '/public/uploads/products/no-image.png';
+        //         }
+                
+        //         $items[] = $row;
+        //         $total += $row['subtotal'];
+
+        //     }
+        //     $result->free();
+        // }
+        
+        // $cart['items'] = $items;
+        // $cart['subtotal'] = $total;
+        // $cart['item_count'] = count($items);
+        
+        return $result;
+    }
+
 
     //get cart with items by user id if user dont have  => creat one
     public function getUserCartWithItems($userId)
