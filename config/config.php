@@ -41,63 +41,6 @@ date_default_timezone_set('UTC');
 mb_internal_encoding('UTF-8');
 mb_http_output('UTF-8');
 
-//-------------------------------------------------
-// CORS configuration
-//-------------------------------------------------
-/*
- // Set JSON content type
- header('Content-Type: application/json; charset=utf-8');
- 
- // Get requesting origin
- $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
- 
- // Define allowed origins
- $allowedOrigins = [
-     // Production frontend
-     'https://gp-mobile-ecommerce.vercel.app',
-     
-     // Development environments
-     'http://localhost:3000',
-     'http://localhost:5173',
-     'http://localhost:5500',
-     'http://localhost:8080',
-     'http://127.0.0.1:3000',
-     'http://127.0.0.1:5173',
-     'http://127.0.0.1:5500',
- ];
- 
- // Check if origin is allowed
- $isAllowed = false;
- 
- // Exact match check
- if (in_array($origin, $allowedOrigins)) {
-     $isAllowed = true;
- }
- 
- // Pattern match for localhost with any port (dev mode only)
- if (APP_ENV === 'development') {
-     if (strpos($origin, 'http://localhost') === 0 || 
-         strpos($origin, 'http://127.0.0.1') === 0) {
-         $isAllowed = true;
-     }
- }
-     
- // Apply CORS headers if origin is allowed
- if ($isAllowed && !empty($origin)) {
-     header("Access-Control-Allow-Origin: {$origin}");
-     header('Access-Control-Allow-Credentials: true');
-     header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-     header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
-     header('Access-Control-Max-Age: 3600');
- }
-     
- // Handle OPTIONS preflight request
- if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-     http_response_code(200);
-     exit();
- }
-
-*/
 
 //-------------------------------------------------
 
