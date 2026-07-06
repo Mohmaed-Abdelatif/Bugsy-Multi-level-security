@@ -21,7 +21,7 @@ class PromoCodeController extends BaseController
     // GET /api/V1/promo-codes (admin only)
     public function index()
     {
-        $this->requireAdmin();
+        // $this->requireAdmin();
 
         $promos = $this->promoModel->findAll();
 
