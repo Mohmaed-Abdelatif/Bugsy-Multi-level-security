@@ -1,7 +1,17 @@
-# Bugsy API - Quick Reference for v1 "till now"
+# What Bugsy
+Bugsy is a PHP e-commerce REST API built on deliberate security tiers — V1, V2 — each one a complete, independently routable API version sharing the same database and core framework — sitting on top of the same business logic: products, categories, brands, carts, orders, user accounts, and reviews. The point of building it this way is not to ship a store. It's to make backend security visible by building the same feature twice: once the way an inexperienced developer would write it under deadline pressure, and once the way a security-conscious engineer would write it knowing what attackers actually do.
 
+V1's job was never to be "bad code." It's realistic code — the kind that ships when a team is moving fast and security isn't yet a first-class concern. Every weakness in V1 is a real pattern seen in production systems: trusting a user_id field in a request body, hashing passwords with a fast general-purpose hash instead of a slow purpose-built one, building SQL with string interpolation because it's faster to write than parameter binding.
+---
+
+V1 — Vulnerable
+Session auth, raw MySQLi queries, MD5 passwords, IDOR everywhere, no rate limiting. Built intentionally insecure as a teaching baseline.
+
+V2 — Secured
+JWT auth, PDO prepared statements, bcrypt, ownership checks, rate limiting, strict file upload validation, audit logging.
+---
+# Bugsy API - Reference
 **Base URL:** `/api/Vnumber`
-
 ---
 
 ## Authentication
@@ -82,25 +92,39 @@
 ## Cart
 | Endpoint | Method | Body | Auth Required |
 |----------|--------|------|---------------|
-| `/cart` | GET | - | Session |
-| `/cart/count` | GET | - | Session |
-| `/cart/total` | GET | - | Session |
-| `/cart/add` | POST | `{product_id, quantity}` | Session |
-| `/cart/items/{id}` | PUT | `{quantity}` | Session |
-| `/cart/items/{id}` | DELETE | - | Session |
-| `/cart/clear` | DELETE | - | Session |
+| `/cart` | GET | - | Yes |
+| `/cart/count` | GET | - | Yes |
+| `/cart/total` | GET | - | Yes |
+| `/cart/add` | POST | `{product_id, quantity}` | Yes |
+| `/cart/items/{id}` | PUT | `{quantity}` | Yes |
+| `/cart/items/{id}` | DELETE | - | Yes |
+| `/cart/clear` | DELETE | - | Yes |
+| `/cart/promo` | POST | `{promo_code}` | Yes |
+| `/cart/clear` | DELETE | - | Yes |
+
+---
+---
+
+## Promo Codes (Admin)
+| Endpoint | Method | Body | Auth Required |
+|----------|--------|------|---------------|
+| `/promo-codes` | GET | - | Admin |
+| `/promo-codes/{id}` | GET | - | Admin |
+| `/promo-codes` | Post | `{code, discount_type, discount_value: percentage or fixed, min_order_amount, usage_limit_total, usage_limit_per_user, expires_at}` | Admin |
+| `/promo-codes/{id}` | PUT | any field to change | Admin |
+| `/promo-codes/{id}` | DELETE | `{quantity}` | Admin |
 
 ---
 
 ## Orders (Customer)
 | Endpoint | Method | Body | Auth Required |
 |----------|--------|------|---------------|
-| `/checkout` | POST | `{payment_method, shipping_address, notes, card_details}` | Session |
-| `/orders` | GET | `?page=1&per_page=20` | Session |
-| `/orders/{id}` | GET | - | Session |
-| `/orders/{id}/items` | GET | - | Session |
-| `/orders/{id}/status` | GET | - | Session |
-| `/orders/{id}/cancel` | PUT | - | Session |
+| `/checkout` | POST | `{payment_method, shipping_address, notes, card_details}` | Yes |
+| `/orders` | GET | `?page=1&per_page=20` | Yes |
+| `/orders/{id}` | GET | - | Yes |
+| `/orders/{id}/items` | GET | - | Yes |
+| `/orders/{id}/status` | GET | - | Yes |
+| `/orders/{id}/cancel` | PUT | - | Yes |
 
 **Payment Methods:** `cash`, `credit_card`, `debit_card`, `paypal`, `bank_transfer`
 
@@ -119,18 +143,18 @@
 ## User Profile
 | Endpoint | Method | Body | Auth Required |
 |----------|--------|------|---------------|
-| `/user/{id}` | GET | - | Session |
-| `/user/{id}` | PUT | `{name, phone, address}` | Session |
-| `/users/{id}/orders` | GET | - | Session |
-| `/users/{id}/password` | PUT | `{old_password, new_password}` | Session |
+| `/user/{id}` | GET | - | Yes |
+| `/user/{id}` | PUT | `{name, phone, address}` | Yes |
+| `/users/{id}/orders` | GET | - | Yes |
+| `/users/{id}/password` | PUT | `{old_password, new_password}` | Yes |
 | `/users/{id}/reviews` | GET | - | No |
-| `/users/{id}/addresses` | GET | - | Session |
-| `/users/{id}/addresses` | POST | `{address}` | Session |
-| `/me` | GET | - | Session |
-| `/me` | PUT | - | Session |
-| `/users/{id}/photo` | POST | `multipart/form-data` => `photo` | Session |
-| `/users/{id}/photo` | GET | - | Session |
-| `/users/{id}/photo` | DELETE | - | Session |
+| `/users/{id}/addresses` | GET | - | Yes |
+| `/users/{id}/addresses` | POST | `{address}` | Yes |
+| `/me` | GET | - | Yes |
+| `/me` | PUT | - | Yes |
+| `/users/{id}/photo` | POST | `multipart/form-data` => `photo` | Yes |
+| `/users/{id}/photo` | GET | - | Yes |
+| `/users/{id}/photo` | DELETE | - | Yes |
 
 
 
@@ -150,9 +174,9 @@
 | `/products/{id}/reviews` | GET | `?page=1&per_page=10&sort=recent` | No |
 | `/products/{id}/rating` | GET | - | No |
 | `/reviews/{id}` | GET | - | No |
-| `/products/{id}/reviews` | POST | `{rating, title, comment}` | Session |
-| `/reviews/{id}` | PUT | `{rating, title, comment}` | Session |
-| `/reviews/{id}` | DELETE | - | Session |
+| `/products/{id}/reviews` | POST | `{rating, title, comment}` | Yes |
+| `/reviews/{id}` | PUT | `{rating, title, comment}` | Yes |
+| `/reviews/{id}` | DELETE | - | Yes |
 | `/reviews/{id}/helpful` | POST | - | No |
 | `/users/{id}/reviews` | GET | - | No |
 
@@ -160,14 +184,6 @@
 
 **Sort Options:** `recent`, `helpful`, `rating_high`, `rating_low`
 
----
-
-## Search (Coming Soon)
-| Endpoint | Method | Params |
-|----------|--------|--------|
-| `/search` | GET | `?q=query` |
-| `/search/suggestions` | GET | `?q=query` |
-| `/search/trending` | GET | - |
 
 ---
 
@@ -175,9 +191,9 @@
 | Endpoint | Method | Auth Required |
 |----------|--------|---------------|
 | `/test/public` | GET | No |
-| `/test/protected` | GET | Session |
+| `/test/protected` | GET | Yes |
 | `/test/admin` | GET | Admin |
-| `/test/session` | GET | Session |
-| `/test/ownership/{user_id}` | GET | Session |
+| `/test/session` | GET | Yes |
+| `/test/ownership/{user_id}` | GET | Yes |
 
 ---
