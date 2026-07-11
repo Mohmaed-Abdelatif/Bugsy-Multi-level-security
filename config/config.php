@@ -71,8 +71,20 @@ spl_autoload_register(function ($class) {
 
 
 //----------------------------------------
+ini_set('session.cookie_samesite', 'None');
+ini_set('session.cookie_secure', '1');
+ini_set('session.cookie_httponly', '0');
+ini_set('session.cookie_domain', '.bugsy.store');
+
 if(session_status() === PHP_SESSION_NONE){
     session_start();
 }
 
+$requestUri = $_SERVER['REQUEST_URI'] ?? '';
 
+if (preg_match('/\.(css|js|jpg|jpeg|png|gif)$/i', $requestUri)) {
+    header_remove('Cache-Control');
+    header_remove('Pragma');
+    header_remove('Expires');
+    header('Cache-Control: public, max-age=600');
+}
